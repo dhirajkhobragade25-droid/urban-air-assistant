@@ -8,7 +8,7 @@ A GenAI-powered assistant that helps people, families and communities get throug
 
 Every suggestion explains its **direct impact**: exposure avoided, % cleaner hours, or kg of CO₂ saved, calculated from your own inputs.
 
-A **"Lungs buddy"** mascot reacts to the air with light, funny motion graphics. It dances in clean air, coughs, puts on an N95, then a gas mask, and finally faints dramatically (white flag included) at hazardous levels. The whole app works in **English and Hindi**.
+An animated **buddy** reacts to the air with light, funny motion graphics. Users pick one of three: **Phephde Brothers** (two lungs, the default), **Badal** (a cloud) or **Tulsi** (a potted plant). In clean air the buddy dances; as AQI rises it sweats, coughs, puts on an N95, then a gas mask, and at hazardous levels faints dramatically with a white flag (the cloud turns black and rains soot, the tulsi wilts). The whole app works in **English and Hindi**.
 
 > **Live demo:** https://dhirajkhobragade25-droid.github.io/urban-air-assistant/
 
@@ -36,7 +36,7 @@ A **"Lungs buddy"** mascot reacts to the air with light, funny motion graphics. 
                                               ▼
         ┌───────────────────────────────┼──────────────────────────────┐
         ▼                               ▼                              ▼
-  Plan cards (UI)               Lungs buddy mood               Ask the assistant
+  Plan cards (UI)               Buddy mood (3 characters)      Ask the assistant
   4 groups, priority tags       (CSS animation)                Gemini, grounded on the
                                                                same data + plan;
                                                                offline fallback
@@ -59,12 +59,12 @@ A **"Lungs buddy"** mascot reacts to the air with light, funny motion graphics. 
 
 ### "What if?" simulator
 
-A slider lets anyone (including judges) try any AQI from 0 to 500 and instantly see the plan and the mascot change, even without network access.
+A slider lets anyone (including judges) try any AQI from 0 to 500 and instantly see the plan and the buddy change, even without network access.
 
 ## Project structure
 
 ```
-index.html            Semantic, accessible markup + inline SVG mascot
+index.html            Semantic, accessible markup + 3 inline SVG buddies
 favicon.svg
 css/styles.css        Layout, AQI colours, all mascot animations (CSS only)
 js/engine.js          Pure logic: AQI bands, risk, forecast window, CO₂ maths, parsing
@@ -72,9 +72,9 @@ js/advice.js          Rule engine that builds the plan
 js/assistant.js       Gemini client, grounded prompts, offline answerer
 js/api.js             Open-Meteo clients with timeout + 10-minute cache
 js/i18n.js            English + Hindi strings and translator
-js/mascot.js          Mood mapping and mascot rendering
+js/mascot.js          Mood mapping, buddy choice and rendering
 js/app.js             UI controller (the only file that touches the DOM)
-tests/*.test.js       40 unit tests (node:test, no dependencies)
+tests/*.test.js       41 unit tests (node:test, no dependencies)
 ```
 
 No frameworks, no build step and no runtime dependencies. The repository is well under 1 MB.
@@ -98,7 +98,7 @@ No frameworks, no build step and no runtime dependencies. The repository is well
 
 - Semantic landmarks, headings, labelled form controls, skip link, visible focus ring, 44 px touch targets.
 - AQI is never shown by colour alone: every band has a text label, and the chips meet AA contrast.
-- Status updates use `role="status"`. The mascot is an SVG with a translated accessible name describing its mood.
+- Status updates use `role="status"`. The buddy is an SVG with a translated accessible name describing who it is and its mood; the picker is a labelled radio group.
 - Animations use only `transform`/`opacity`, stop completely under `prefers-reduced-motion`, and have a **Pause animation** button (WCAG 2.2.2).
 - Full Hindi UI with correct `lang` attribute switching.
 
@@ -112,10 +112,10 @@ No frameworks, no build step and no runtime dependencies. The repository is well
 ## Testing
 
 ```bash
-npm test        # node --test, 40 tests, needs Node 20+
+npm test        # node --test, 41 tests, needs Node 20+
 ```
 
-Covers AQI band edges, input validation, personal risk, forecast windows (gaps, past hours, midnight wrap), response parsing, every rule path, CO₂ maths, prompt grounding and injection handling, Gemini error mapping (key in header, not URL), API caching/timeouts/validation, translation key and placeholder parity between English and Hindi, and mascot mood mapping.
+Covers AQI band edges, input validation, personal risk, forecast windows (gaps, past hours, midnight wrap), response parsing, every rule path, CO₂ maths, prompt grounding and injection handling, Gemini error mapping (key in header, not URL), API caching/timeouts/validation, translation key and placeholder parity between English and Hindi, and buddy mood/character mapping.
 
 ## Run locally
 

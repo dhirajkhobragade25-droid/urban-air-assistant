@@ -308,84 +308,112 @@ legend { font-weight: 700; padding: 0 .3rem; }
   border: 9px solid transparent; border-bottom: 0; border-top-color: #fff;
 }
 
-.mascot { display: block; width: min(250px, 72%); margin: 70px auto 10px; overflow: visible; }
+.mascot { display: block; width: min(240px, 70%); margin: 64px auto 8px; overflow: visible; }
 .motion-btn { position: absolute; right: 8px; bottom: 8px; background: rgb(255 255 255 / 92%); }
+.buddy[hidden] { display: none; }
 
-/* Mascot parts */
-.m-lobes { fill: var(--lung); stroke: var(--lung-dark); stroke-width: 3; transition: fill .8s ease, stroke .8s ease; }
-.m-trachea { fill: #ffd1dc; stroke: var(--lung-dark); stroke-width: 3; transition: stroke .8s ease; }
-.m-rings, .m-bronchi { fill: none; stroke: var(--lung-dark); stroke-width: 2.5; stroke-linecap: round; opacity: .55; }
-.m-shine { fill: none; stroke: #fff; stroke-width: 4; stroke-linecap: round; opacity: .6; }
-.m-limb { fill: none; stroke: #7a2e45; stroke-width: 5; stroke-linecap: round; }
-.m-hand, .m-foot { fill: #7a2e45; }
-.m-cheeks ellipse { fill: #ff5c8a; opacity: .45; }
-.m-brows path { fill: none; stroke: #3b1f2b; stroke-width: 3.5; stroke-linecap: round; }
-.m-eye { fill: #fff; stroke: #3b1f2b; stroke-width: 2; }
-.m-pupil { fill: #1f2937; }
+/* Buddy picker */
+.buddy-picker { display: flex; flex-wrap: wrap; gap: .4rem; margin: .6rem 0 0; }
+.buddy-picker legend { font-size: .95rem; }
+.buddy-option {
+  display: flex; align-items: center; gap: .4rem;
+  min-height: 40px; padding: .2rem .8rem; margin: 0;
+  border: 1.5px solid var(--line); border-radius: 999px;
+  font-weight: 600; cursor: pointer; background: #fff;
+}
+.buddy-option input { width: 18px; height: 18px; accent-color: var(--primary); }
+.buddy-option:has(input:checked) { border-color: var(--primary); background: #ecfdf5; }
+
+/* ---------- Colours per buddy and mood ---------- */
+.stage { --body: #ff8fab; --body-line: #d6336c; --leaf: #22c55e; --leaf-line: #15803d; }
+.stage[data-character="twins"][data-mood="meh"] { --body: #f9a1b4; --body-line: #d9627f; }
+.stage[data-character="twins"][data-mood="cough"] { --body: #e9a3a8; --body-line: #c46773; }
+.stage[data-character="twins"][data-mood="mask"] { --body: #d9a0a0; --body-line: #b06a6e; }
+.stage[data-character="twins"][data-mood="gasmask"] { --body: #c4a09b; --body-line: #95706a; }
+.stage[data-character="twins"][data-mood="faint"] { --body: #b5a3a0; --body-line: #7d6a66; }
+
+.stage[data-character="cloud"] { --body: #ffffff; --body-line: #8cc4ea; }
+.stage[data-character="cloud"][data-mood="meh"] { --body: #eceae4; --body-line: #a8b3bd; }
+.stage[data-character="cloud"][data-mood="cough"] { --body: #d9d3c7; --body-line: #958c7e; }
+.stage[data-character="cloud"][data-mood="mask"] { --body: #cfc8bb; --body-line: #8a8174; }
+.stage[data-character="cloud"][data-mood="gasmask"] { --body: #a39a8c; --body-line: #635a4e; }
+.stage[data-character="cloud"][data-mood="faint"] { --body: #7a7064; --body-line: #3a342e; }
+
+.stage[data-mood="meh"] { --leaf: #4fbf62; --leaf-line: #2f7d32; }
+.stage[data-mood="cough"], .stage[data-mood="mask"] { --leaf: #9bb54a; --leaf-line: #5b7a1f; }
+.stage[data-mood="gasmask"] { --leaf: #a89f3c; --leaf-line: #6b6420; }
+.stage[data-mood="faint"] { --leaf: #b45309; --leaf-line: #78350f; }
+
+/* ---------- Shared parts ---------- */
+.m-body { fill: var(--body); stroke: var(--body-line); stroke-width: 3; transition: fill .8s ease, stroke .8s ease; }
+.m-trachea { fill: #ffd1dc; stroke: var(--body-line); stroke-width: 3; }
+.m-rings { fill: none; stroke: var(--body-line); stroke-width: 2; opacity: .55; }
+.m-bronchi-out { fill: none; stroke: var(--body-line); stroke-width: 8; stroke-linecap: round; }
+.m-bronchi-in { fill: none; stroke: #ffd1dc; stroke-width: 3; stroke-linecap: round; }
+.m-shine { fill: none; stroke: #fff; stroke-width: 3.5; stroke-linecap: round; opacity: .55; }
+
+.c-outline { fill: var(--body-line); stroke: var(--body-line); stroke-width: 7; transition: fill .8s ease, stroke .8s ease; }
+.c-fill { fill: var(--body); transition: fill .8s ease; }
+.c-shadow { fill: #000; opacity: .12; }
+.c-rain path { stroke: #3a342e; stroke-width: 2.5; stroke-linecap: round; }
+
+.t-pot { fill: #e07b39; stroke: #9a3412; stroke-width: 3; }
+.t-rim { fill: #f0935a; stroke: #9a3412; stroke-width: 3; }
+.t-soil { fill: #5b3a1e; }
+.t-stem { fill: none; stroke: var(--leaf-line); stroke-width: 5; stroke-linecap: round; transition: stroke .8s ease; }
+.t-leaf { fill: var(--leaf); stroke: var(--leaf-line); stroke-width: 2.5; transition: fill .8s ease, stroke .8s ease; }
+.t-rib { stroke: var(--leaf-line); stroke-width: 1.5; opacity: .7; }
+.t-bud { fill: #a855f7; stroke: #6b21a8; stroke-width: 1.5; }
+
+.m-eye { fill: #fff; stroke: #2b1d24; stroke-width: 2; }
+.m-pupil { fill: #2b1d24; }
 .m-glint { fill: #fff; }
-.m-eyes-squint path, .m-eyes-x path { fill: none; stroke: #1f2937; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
-.m-shades rect { fill: #111827; }
-.m-shades-bridge { stroke: #111827; stroke-width: 4; }
-.m-shades-shine { stroke: rgb(255 255 255 / 70%); stroke-width: 2.5; stroke-linecap: round; }
-.m-mouth-smile { fill: #7a1f3d; }
-.m-mouth-flat, .m-mouth-wavy { fill: none; stroke: #3b1f2b; stroke-width: 3.5; stroke-linecap: round; }
-.m-mouth-o { fill: #5b1a30; }
-.m-sweat { fill: #7dd3fc; stroke: #0284c7; stroke-width: 1.5; }
-.m-puff { fill: #a8a29e; stroke: #78716c; stroke-width: 1.5; }
-.m-mask-cup { fill: #f8fafc; stroke: #94a3b8; stroke-width: 2.5; }
-.m-mask-seam { stroke: #cbd5e1; stroke-width: 2; }
-.m-mask-straps { stroke: #e2e8f0; stroke-width: 3; }
-.m-gm-strap { stroke: #1f2937; stroke-width: 5; stroke-linecap: round; }
-.m-goggle { fill: rgb(56 189 248 / 35%); stroke: #1f2937; stroke-width: 5; }
-.m-snout { fill: #374151; stroke: #111827; stroke-width: 2.5; }
-.m-canister { fill: #4b5563; stroke: #111827; stroke-width: 2.5; }
-.m-canister-lines { stroke: #9ca3af; stroke-width: 2; }
-.m-stars polygon { fill: #fde047; stroke: #a16207; stroke-width: 1.2; }
-.m-pole { stroke: #78350f; stroke-width: 4; stroke-linecap: round; }
-.m-flag-cloth { fill: #fff; stroke: #cbd5e1; stroke-width: 1.5; }
+.m-eyes-happy path, .m-eyes-squint path, .m-eyes-x path, .m-brows path {
+  fill: none; stroke: #2b1d24; stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round;
+}
+.m-brows path { stroke-width: 3; }
+.m-cheeks ellipse { fill: #ff5c8a; opacity: .45; }
+.m-mouth-smile path { fill: #7a1f3d; }
+.m-mouth-o ellipse { fill: #5b1a30; }
+.m-mouth-flat path, .m-mouth-wavy path { fill: none; stroke: #2b1d24; stroke-width: 3; stroke-linecap: round; }
+.m-mask-cup { fill: #f8fafc; stroke: #94a3b8; stroke-width: 2.2; }
+.m-mask-seam { stroke: #cbd5e1; stroke-width: 1.6; }
+.m-mask-straps { stroke: #e2e8f0; stroke-width: 2.5; }
+.m-gm-strap { stroke: #1f2937; stroke-width: 4; stroke-linecap: round; }
+.m-goggle { fill: rgb(56 189 248 / 35%); stroke: #1f2937; stroke-width: 4; }
+.m-snout { fill: #374151; stroke: #111827; stroke-width: 2; }
+.m-filter { fill: #6b7280; stroke: #111827; stroke-width: 1.5; }
+.m-canister { fill: #4b5563; stroke: #111827; stroke-width: 2; }
+.m-canister-lines { stroke: #9ca3af; stroke-width: 1.5; }
+.m-sweat { fill: #7dd3fc; stroke: #0284c7; stroke-width: 1.3; }
+.m-puff { fill: #a8a29e; stroke: #78716c; stroke-width: 1.3; }
+.m-sparkles path { fill: #fde047; stroke: #ca8a04; stroke-width: 1; }
+.m-orbit { fill: none; stroke: #fde047; stroke-width: 1.5; stroke-dasharray: 3 3; opacity: .8; }
+.m-stars polygon { fill: #fde047; stroke: #a16207; stroke-width: 1; }
+.m-pole { stroke: #78350f; stroke-width: 3.5; stroke-linecap: round; }
+.m-flag-cloth { fill: #fff; stroke: #cbd5e1; stroke-width: 1.2; }
 
-/* Part visibility per mood (hidden by default) */
-.m-eyes-squint, .m-eyes-x, .m-shades, .m-mouth, .m-sweat, .m-puffs,
-.m-mask, .m-gasmask, .m-stars, .m-flag, .m-brows { display: none; }
+/* ---------- Which parts show in which mood (hidden by default) ---------- */
+.m-eyes-open, .m-eyes-happy, .m-eyes-squint, .m-eyes-x, .m-brows, .m-cheeks, .m-mouth,
+.m-mask, .m-gasmask, .m-sweat, .m-puffs, .m-sparkles, .m-dizzy, .m-flag,
+.t-plant, .t-fallen, .c-rain { display: none; }
 
-[data-mood="happy"] .m-shades,
-[data-mood="happy"] .m-mouth-smile { display: inline; }
+[data-mood="happy"] :is(.m-eyes-happy, .m-mouth-smile, .m-cheeks, .m-sparkles, .t-plant-ok) { display: inline; }
+[data-mood="meh"] :is(.m-eyes-open, .m-mouth-flat, .m-cheeks, .m-sweat, .t-plant-ok) { display: inline; }
+[data-mood="cough"] :is(.m-eyes-squint, .m-mouth-o, .m-puffs, .t-plant-droop) { display: inline; }
+[data-mood="mask"] :is(.m-eyes-open, .m-brows, .m-mask, .m-sweat, .t-plant-droop) { display: inline; }
+[data-mood="gasmask"] :is(.m-gasmask, .t-plant-droop) { display: inline; }
+[data-mood="faint"] :is(.m-eyes-x, .m-mouth-wavy, .m-dizzy, .m-flag, .t-plant-wilt, .t-fallen, .c-rain) { display: inline; }
 
-[data-mood="meh"] .m-brows,
-[data-mood="meh"] .m-mouth-flat,
-[data-mood="meh"] .m-sweat { display: inline; }
+/* ---------- Motion (transform + opacity only) ---------- */
+.m-figure, .m-flag { transform-box: fill-box; transform-origin: 50% 100%; }
+.m-eyes-open, .m-puff, .m-sweat, .m-sparkles path, .m-stars { transform-box: fill-box; transform-origin: center; }
+.t-plant-ok, .t-plant-droop { transform-box: fill-box; transform-origin: 50% 100%; }
 
-[data-mood="cough"] .m-eyes-open { display: none; }
-[data-mood="cough"] .m-eyes-squint,
-[data-mood="cough"] .m-mouth-o,
-[data-mood="cough"] .m-puffs { display: inline; }
-
-[data-mood="mask"] .m-brows,
-[data-mood="mask"] .m-mask { display: inline; }
-[data-mood="mask"] .m-cheeks { display: none; }
-
-[data-mood="gasmask"] .m-gasmask { display: inline; }
-[data-mood="gasmask"] .m-cheeks { display: none; }
-
-[data-mood="faint"] .m-eyes-open,
-[data-mood="faint"] .m-cheeks { display: none; }
-[data-mood="faint"] .m-eyes-x,
-[data-mood="faint"] .m-mouth-wavy,
-[data-mood="faint"] .m-stars,
-[data-mood="faint"] .m-flag { display: inline; }
-
-/* Transform origins (SVG user units) */
-.m-figure { transform-origin: 100px 192px; }
-.m-arm-l { transform-origin: 40px 118px; }
-.m-arm-r { transform-origin: 160px 118px; }
-.m-eyes-open, .m-puff, .m-sweat { transform-box: fill-box; transform-origin: center; }
-.m-stars { transform-origin: 33px 86px; }
-.m-flag { transform-origin: 182px 196px; }
-
-/* Motion per mood */
-[data-mood="happy"] .m-figure { animation: dance .9s ease-in-out infinite alternate; }
-[data-mood="happy"] .m-arm-l { animation: wave-l .45s ease-in-out infinite alternate; }
-[data-mood="happy"] .m-arm-r { animation: wave-r .45s ease-in-out infinite alternate-reverse; }
+[data-mood="happy"] .m-figure { animation: bounce .8s ease-in-out infinite alternate; }
+[data-mood="happy"] .t-plant-ok { animation: sway 1.6s ease-in-out infinite; }
+[data-mood="happy"] .m-sparkles path { animation: twinkle 1.4s ease-in-out infinite; }
+[data-mood="happy"] .m-sparkles path:nth-child(2) { animation-delay: .7s; }
 
 [data-mood="meh"] .m-figure { animation: sway 3.2s ease-in-out infinite; }
 [data-mood="meh"] .m-pupil { animation: side-eye 4s ease-in-out infinite; }
@@ -395,14 +423,20 @@ legend { font-weight: 700; padding: 0 .3rem; }
 [data-mood="cough"] .m-puff { animation: puff 2.2s ease-out infinite; }
 [data-mood="cough"] .m-puff-2 { animation-delay: .08s; }
 [data-mood="cough"] .m-puff-3 { animation-delay: .16s; }
+[data-mood="cough"] .t-plant-droop { animation: sway 2.2s ease-in-out infinite; }
 
 [data-mood="mask"] .m-figure { animation: shiver 1.8s ease-in-out infinite; }
+[data-mood="mask"] .m-sweat { animation: sweat 2.4s ease-in infinite; }
 
 [data-mood="gasmask"] .m-figure { animation: trudge 2.6s ease-in-out infinite; }
 
-[data-mood="faint"] .m-figure { animation: faint 1.4s cubic-bezier(.5, 0, .75, 0) forwards; transform-origin: 100px 110px; }
-[data-mood="faint"] .m-stars { animation: stars-in .4s ease-out 1.3s both, spin 2.4s linear 1.3s infinite; }
-[data-mood="faint"] .m-flag { animation: flag-up .5s ease-out 1.5s both, flag-wave .6s ease-in-out 2s infinite alternate; }
+[data-mood="faint"] .m-figure { animation: faint 1.4s cubic-bezier(.5, 0, .75, 0) forwards; }
+[data-mood="faint"] .m-dizzy { animation: appear .4s ease-out 1.2s both; }
+[data-mood="faint"] .m-stars { animation: wobble 1.2s ease-in-out 1.2s infinite alternate; }
+[data-mood="faint"] .m-flag { animation: flag-up .5s ease-out 1.4s both; }
+[data-mood="faint"] .m-flag-cloth { animation: flag-wave .6s ease-in-out 1.9s infinite alternate; transform-box: fill-box; transform-origin: 0 50%; }
+[data-mood="faint"] .c-rain path { animation: soot 1s linear infinite; }
+[data-mood="faint"] .c-rain path:nth-child(even) { animation-delay: .5s; }
 
 .m-eyes-open { animation: blink 4.5s infinite; }
 
@@ -412,11 +446,10 @@ legend { font-weight: 700; padding: 0 .3rem; }
 /* Pause control (WCAG 2.2.2) */
 .stage.is-paused *, .stage.is-paused { animation-play-state: paused !important; }
 
-@keyframes dance { from { transform: translateY(0) rotate(-4deg); } to { transform: translateY(-10px) rotate(4deg); } }
-@keyframes wave-l { from { transform: rotate(-30deg); } to { transform: rotate(12deg); } }
-@keyframes wave-r { from { transform: rotate(30deg); } to { transform: rotate(-12deg); } }
-@keyframes sway { 0%, 100% { transform: rotate(-2deg); } 50% { transform: rotate(2deg); } }
-@keyframes side-eye { 0%, 35%, 100% { transform: translateX(0); } 45%, 60% { transform: translateX(-4px); } 70%, 85% { transform: translateX(3px); } }
+@keyframes bounce { from { transform: translateY(0) rotate(-3deg); } to { transform: translateY(-9px) rotate(3deg); } }
+@keyframes sway { 0%, 100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
+@keyframes twinkle { 0%, 100% { transform: scale(.6); opacity: .5; } 50% { transform: scale(1.2); opacity: 1; } }
+@keyframes side-eye { 0%, 35%, 100% { transform: translateX(0); } 45%, 60% { transform: translateX(-3px); } 70%, 85% { transform: translateX(2px); } }
 @keyframes sweat { 0% { transform: translateY(0); opacity: 1; } 80% { opacity: 1; } 100% { transform: translateY(14px); opacity: 0; } }
 @keyframes cough {
   0%, 55%, 100% { transform: translate(0, 0) scale(1); }
@@ -429,23 +462,24 @@ legend { font-weight: 700; padding: 0 .3rem; }
 @keyframes puff {
   0%, 58% { transform: translate(0, 0) scale(.2); opacity: 0; }
   64% { opacity: .9; }
-  100% { transform: translate(26px, -16px) scale(1.4); opacity: 0; }
+  100% { transform: translate(0, -14px) scale(1.4); opacity: 0; }
 }
 @keyframes shiver { 0%, 100% { transform: translateX(0); } 10%, 30%, 50% { transform: translateX(-1.5px); } 20%, 40% { transform: translateX(1.5px); } 60% { transform: translateY(-2px); } }
-@keyframes trudge { 0%, 100% { transform: translate(-6px, 0) rotate(-2deg); } 25% { transform: translate(-3px, -3px) rotate(0); } 50% { transform: translate(6px, 0) rotate(2deg); } 75% { transform: translate(3px, -3px) rotate(0); } }
+@keyframes trudge { 0%, 100% { transform: translate(-6px, 0) rotate(-2deg); } 25% { transform: translate(-3px, -3px); } 50% { transform: translate(6px, 0) rotate(2deg); } 75% { transform: translate(3px, -3px); } }
 @keyframes faint {
   0% { transform: none; }
-  25% { transform: rotate(9deg); }
-  45% { transform: rotate(-7deg); }
-  60% { transform: rotate(5deg); }
-  100% { transform: translate(0, 12px) rotate(-90deg) scale(.82); }
+  30% { transform: rotate(8deg); }
+  55% { transform: rotate(-6deg); }
+  75% { transform: rotate(3deg); }
+  100% { transform: translateY(10px) rotate(-7deg) scaleY(.94); }
 }
-@keyframes stars-in { from { opacity: 0; } to { opacity: 1; } }
-@keyframes spin { to { transform: rotate(360deg); } }
-@keyframes flag-up { from { transform: translateY(80px); } to { transform: translateY(0); } }
-@keyframes flag-wave { from { transform: skewY(0); } to { transform: skewY(-6deg); } }
+@keyframes appear { from { opacity: 0; } to { opacity: 1; } }
+@keyframes wobble { from { transform: translateX(-5px); } to { transform: translateX(5px); } }
+@keyframes flag-up { from { transform: translateY(60px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes flag-wave { from { transform: skewY(0); } to { transform: skewY(-8deg); } }
+@keyframes soot { from { transform: translateY(-6px); opacity: 0; } 30% { opacity: 1; } to { transform: translateY(10px); opacity: 0; } }
 @keyframes blink { 0%, 94%, 100% { transform: scaleY(1); } 96% { transform: scaleY(.1); } }
-@keyframes gasp { 0% { transform: scale(1); } 40% { transform: scale(1.12); } 100% { transform: scale(1); } }
+@keyframes gasp { 0% { transform: scale(1); } 40% { transform: scale(1.1); } 100% { transform: scale(1); } }
 @keyframes pop { from { transform: scale(.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 @keyframes drift { from { transform: translateX(0); } to { transform: translateX(170vw); } }
 @keyframes smog-drift { from { transform: translateX(-8%); } to { transform: translateX(8%); } }
@@ -455,7 +489,7 @@ legend { font-weight: 700; padding: 0 .3rem; }
 /* Respect reduced-motion: show the static pose, no movement. */
 @media (prefers-reduced-motion: reduce) {
   .stage, .stage * { animation: none !important; transition: none !important; }
-  .stage[data-mood="faint"] .m-figure { transform: translate(0, 12px) rotate(-90deg) scale(.82); transform-origin: 100px 110px; }
+  .stage[data-mood="faint"] .m-figure { transform: translateY(10px) rotate(-7deg) scaleY(.94); }
   .motion-btn { display: none; }
 }
 

@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { t, keysFor, createTranslator, localizeParams, resolveLang, LANGS } from '../js/i18n.js';
 import { ADVICE_IDS } from '../js/advice.js';
-import { MOODS, QUIPS_PER_MOOD, moodForLevel, quipKey } from '../js/mascot.js';
+import { MOODS, QUIPS_PER_MOOD, CHARACTERS, DEFAULT_CHARACTER, moodForLevel, quipKey, resolveCharacter } from '../js/mascot.js';
 
 const placeholders = (text) => [...text.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort();
 
@@ -22,6 +22,7 @@ test('every advice id and mascot line is translated', () => {
     for (const part of ['title', 'action', 'why']) assert.ok(known.has(`advice.${id}.${part}`), `${id}.${part}`);
   }
   assert.ok(known.has('advice.wfh-vehicle.why'));
+  for (const id of CHARACTERS) assert.ok(known.has(`char.${id}`), id);
   for (const mood of MOODS) {
     assert.ok(known.has(`mood.${mood}`), mood);
     for (let i = 0; i < QUIPS_PER_MOOD; i += 1) assert.ok(known.has(quipKey(mood, i)), quipKey(mood, i));
@@ -53,4 +54,13 @@ test('mascot mood follows personal risk level', () => {
   assert.equal(moodForLevel(NaN), 'happy');
   assert.equal(quipKey('cough', 3), 'quip.cough.1');
   assert.equal(quipKey('nope', 0), 'quip.happy.0');
+});
+
+test('buddy choice defaults to Phephde Brothers and rejects unknown ids', () => {
+  assert.equal(DEFAULT_CHARACTER, 'twins');
+  assert.deepEqual(CHARACTERS, ['twins', 'cloud', 'tulsi']);
+  assert.equal(resolveCharacter('cloud'), 'cloud');
+  assert.equal(resolveCharacter('pigeon'), 'twins');
+  assert.equal(resolveCharacter(null), 'twins');
+  assert.equal(createTranslator('hi')('mascot.label', { name: 'तुलसी', mood: 'खाँसते हुए' }), 'तुलसी: खाँसते हुए');
 });

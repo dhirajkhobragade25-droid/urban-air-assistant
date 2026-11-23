@@ -6,14 +6,14 @@ import { DEFAULT_PROFILE, normalizeProfile, findBestWindow, formatRange, whoMult
 import { CATEGORIES, buildContext, buildPlan } from './advice.js';
 import { createTranslator, resolveLang, formatNumber } from './i18n.js';
 import { createAirClient } from './api.js';
-import { moodForLevel, quipKey, renderMascot } from './mascot.js';
+import { moodForLevel, quipKey, renderMascot, resolveCharacter, DEFAULT_CHARACTER } from './mascot.js';
 import {
   DEFAULT_GEMINI_MODEL, MAX_QUESTION_LENGTH, askGemini, buildSystemPrompt, buildUserPrompt,
   describeAdvice, isValidApiKey, isValidModel, localAnswer, sanitizeQuestion, toPlainLines,
 } from './assistant.js';
 
 /* ---------- Storage (fails safely in private mode) ---------- */
-const KEYS = { lang: 'uaqa.lang', profile: 'uaqa.profile', place: 'uaqa.place', ai: 'uaqa.ai' };
+const KEYS = { lang: 'uaqa.lang', profile: 'uaqa.profile', place: 'uaqa.place', ai: 'uaqa.ai', buddy: 'uaqa.buddy' };
 
 function safeStorage(name) {
   try {
@@ -53,6 +53,7 @@ const els = {
   status: $('#status'),
   stage: $('#stage'),
   motionBtn: $('#motion-btn'),
+  buddyPicker: $('.buddy-picker'),
   readout: $('#readout'),
   simRange: $('#sim-range'),
   simOutput: $('#sim-output'),
@@ -98,6 +99,7 @@ const state = {
   status: { key: '', params: {}, isError: false },
   view: null,
   mood: null,
+  character: DEFAULT_CHARACTER,
   quipSeed: 0,
   requestId: 0,
   paused: false,
@@ -231,9 +233,10 @@ function renderMascotView(view) {
     state.quipSeed += 1;
   }
   renderMascot(els.stage, {
+    character: state.character,
     mood,
     quip: T(quipKey(mood, state.quipSeed)),
-    label: T('mascot.label', { mood: T(`mood.${mood}`) }),
+    label: T('mascot.label', { name: T(`char.${state.character}`), mood: T(`mood.${mood}`) }),
   });
 }
 
@@ -407,6 +410,14 @@ function onProfileChange() {
   scheduleRender();
 }
 
+/* ---------- Buddy choice ---------- */
+function onBuddyChange(event) {
+  if (event.target.name !== 'buddy') return;
+  state.character = resolveCharacter(event.target.value);
+  store.set(local, KEYS.buddy, state.character);
+  renderMascotView(state.view);
+}
+
 /* ---------- Mascot motion control ---------- */
 function updateMotionButton() {
   els.stage.classList.toggle('is-paused', state.paused);
@@ -526,6 +537,9 @@ function init() {
   state.lang = resolveLang(savedLang || (browserHindi ? 'hi' : 'en'));
   T = createTranslator(state.lang);
 
+  state.character = resolveCharacter(store.get(local, KEYS.buddy));
+  els.buddyPicker.querySelectorAll('input[name="buddy"]').forEach((input) => { input.checked = input.value === state.character; });
+
   state.profile = normalizeProfile(store.get(local, KEYS.profile) || DEFAULT_PROFILE);
   writeProfile(state.profile);
 
@@ -544,6 +558,7 @@ function init() {
   els.simReset.addEventListener('click', onSimReset);
   els.profileForm.addEventListener('change', onProfileChange);
   els.profileForm.addEventListener('submit', (event) => event.preventDefault());
+  els.buddyPicker.addEventListener('change', onBuddyChange);
   els.motionBtn.addEventListener('click', () => {
     state.paused = !state.paused;
     updateMotionButton();
