@@ -147,3 +147,65 @@ export const ADVICE_IDS = Object.freeze([
   'windows', 'ventilate', 'purifier', 'diy-purifier', 'cooking-vent', 'smoke-sources', 'dust',
   'clean-fuel', 'transit-default', 'warmth', 'induction', 'community',
 ]);
+
+/* ── Quick do's and don'ts ──────────────────────────────────────────
+ * Short one-liners for a glance. Each list is in priority order; the
+ * first MAX_DD entries whose condition holds are shown.
+ */
+export const MAX_DD = 6;
+
+const usesVehicle = (ctx) => VEHICLE_MODES.includes(ctx.profile.commute);
+const hasGoodWindow = ({ aqi, window }) => Boolean(window) && aqi > 50 && window.reductionPct >= 10;
+
+export const DO_RULES = Object.freeze([
+  { id: 'stay-in', when: ({ aqi }) => aqi > 300 },
+  { id: 'see-doctor', when: ({ risk }) => risk.level >= 4 },
+  { id: 'n95', when: ({ aqi, risk }) => aqi > 150 || risk.level >= 3 },
+  { id: 'meds', when: ({ aqi, profile }) => profile.respiratory && aqi > 100 },
+  { id: 'clean-room', when: ({ aqi }) => aqi > 200 },
+  { id: 'windows-shut', when: ({ aqi }) => aqi > 100 },
+  {
+    id: 'best-hours',
+    when: hasGoodWindow,
+    params: ({ window }) => ({ range: formatRange(window.start, window.hours), nextDay: window.nextDay }),
+  },
+  { id: 'wfh', when: ({ aqi, profile }) => aqi > 200 && profile.commute !== 'wfh' },
+  { id: 'walk-cycle', when: ({ aqi }) => aqi <= 50 },
+  { id: 'air-out', when: ({ aqi }) => aqi <= 50 },
+  { id: 'play-out', when: ({ aqi }) => aqi <= 50 },
+  { id: 'indoor-exercise', when: ({ aqi }) => aqi > 150 },
+  { id: 'transit', when: (ctx) => ctx.aqi > 50 && usesVehicle(ctx) },
+  { id: 'damp-mop', when: ({ aqi }) => aqi > 50 },
+  { id: 'chimney', when: ({ profile }) => profile.cooking !== 'induction' },
+  { id: 'check-aqi', when: ({ aqi }) => aqi <= 100 },
+]);
+
+export const DONT_RULES = Object.freeze([
+  { id: 'miss-out', when: ({ aqi }) => aqi <= 50 },
+  { id: 'travel', when: ({ aqi }) => aqi > 300 },
+  { id: 'hard-exercise', when: ({ aqi }) => aqi > 150 },
+  { id: 'kids-out', when: ({ aqi, profile }) => (profile.children && aqi > 100) || aqi > 200 },
+  { id: 'cloth-mask', when: ({ aqi }) => aqi > 150 },
+  { id: 'open-windows', when: ({ aqi }) => aqi > 100 },
+  { id: 'busy-roads', when: ({ aqi }) => aqi > 100 },
+  { id: 'angithi', when: ({ aqi }) => aqi > 50 },
+  { id: 'incense', when: ({ aqi }) => aqi > 100 },
+  { id: 'sweep', when: ({ aqi }) => aqi > 100 },
+  { id: 'plants', when: ({ aqi }) => aqi > 150 },
+  { id: 'burn', when: () => true },
+  { id: 'smoke', when: () => true },
+  { id: 'idle', when: usesVehicle },
+]);
+
+export const DO_IDS = Object.freeze(DO_RULES.map((r) => r.id));
+export const DONT_IDS = Object.freeze(DONT_RULES.map((r) => r.id));
+
+const pick = (rules, ctx) => rules
+  .filter((rule) => rule.when(ctx))
+  .slice(0, MAX_DD)
+  .map((rule) => ({ id: rule.id, params: rule.params ? rule.params(ctx) : {} }));
+
+/** @returns {{dos: Array<{id:string, params:object}>, donts: Array<{id:string, params:object}>}} */
+export function buildDosDonts(context) {
+  return { dos: pick(DO_RULES, context), donts: pick(DONT_RULES, context) };
+}

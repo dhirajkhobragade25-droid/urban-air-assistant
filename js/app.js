@@ -3,7 +3,7 @@
  * All dynamic text is set with textContent (never innerHTML).
  */
 import { DEFAULT_PROFILE, normalizeProfile, findBestWindow, formatRange, whoMultiple } from './engine.js';
-import { CATEGORIES, buildContext, buildPlan } from './advice.js';
+import { CATEGORIES, buildContext, buildPlan, buildDosDonts } from './advice.js';
 import { createTranslator, resolveLang, formatNumber } from './i18n.js';
 import { createAirClient } from './api.js';
 import { moodForLevel, quipKey, renderMascot, resolveCharacter, DEFAULT_CHARACTER } from './mascot.js';
@@ -160,6 +160,7 @@ function computeView() {
     window,
     risk: context.risk,
     plan: buildPlan(context),
+    dosDonts: buildDosDonts(context),
     place: simulated || !state.live ? null : placeName(state.live.place),
   };
 }
@@ -258,6 +259,7 @@ function renderPlan(view) {
     els.plan.append(el('p', { class: 'empty', text: T('plan.needData') }));
     return;
   }
+  els.plan.append(renderDosDonts(view.dosDonts));
   for (const category of CATEGORIES) {
     const items = view.plan[category];
     els.plan.append(el('section', { class: 'plan-group', 'aria-labelledby': `plan-${category}` }, [
@@ -267,6 +269,17 @@ function renderPlan(view) {
         : el('p', { class: 'empty', text: T('plan.empty') }),
     ]));
   }
+}
+
+function renderDosDonts({ dos, donts }) {
+  const column = (kind, list, prefix) => el('div', { class: `dd-col dd-${kind}` }, [
+    el('h4', { text: T(`dd.${kind}`) }),
+    el('ul', {}, list.map((item) => el('li', { text: T(`${prefix}.${item.id}`, item.params) }))),
+  ]);
+  return el('section', { class: 'dd', 'aria-labelledby': 'dd-heading' }, [
+    el('h3', { id: 'dd-heading', text: T('dd.heading') }),
+    el('div', { class: 'dd-cols' }, [column('do', dos, 'do'), column('dont', donts, 'dont')]),
+  ]);
 }
 
 /* ---------- Location ---------- */
@@ -496,7 +509,9 @@ async function onAsk(event) {
     appendMessage('bot', [T('chat.needData')], 'chat.src.local');
     return;
   }
-  const builtIn = () => localAnswer({ question, plan: view.plan, risk: view.risk, translate: T }).split('\n');
+  const builtIn = () => localAnswer({
+    question, plan: view.plan, risk: view.risk, translate: T, dosDonts: view.dosDonts,
+  }).split('\n');
 
   if (!state.ai.apiKey) {
     appendMessage('bot', builtIn(), 'chat.src.local');
@@ -511,7 +526,14 @@ async function onAsk(event) {
       model: state.ai.model,
       systemPrompt: buildSystemPrompt(state.lang),
       userPrompt: buildUserPrompt({
-        question, place: view.place, snapshot: view.snapshot, risk: view.risk, profile: state.profile, plan: view.plan, translate: T,
+        question,
+        place: view.place,
+        snapshot: view.snapshot,
+        risk: view.risk,
+        profile: state.profile,
+        plan: view.plan,
+        dosDonts: view.dosDonts,
+        translate: T,
       }),
     });
     fillMessage(pending, 'bot', toPlainLines(answer), 'chat.src.gemini');

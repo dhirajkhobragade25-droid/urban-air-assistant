@@ -45,6 +45,7 @@ const INTENTS = Object.freeze([
   { name: 'commute', pattern: /commute|drive|car|bike|scooter|metro|bus|travel|office|traffic|गाड़ी|कार|बाइक|मेट्रो|ऑफ़िस|ऑफिस/i, ids: ['commute-today', 'rider', 'walker', 'wfh', 'transit-default', 'idling'] },
   { name: 'health', pattern: /asthma|cough|breath|inhaler|heart|pregnan|elder|old|अस्थमा|खाँसी|खांसी|साँस|सांस|दिल|बुज़ुर्ग/i, ids: ['meds', 'sensitive', 'mask', 'emergency'] },
   { name: 'impact', pattern: /impact|carbon|co2|co₂|emission|save|planet|असर|कार्बन|बचत/i, ids: ['transit-default', 'commute-today', 'clean-fuel', 'no-burning', 'induction'] },
+  { name: 'dosdonts', pattern: /avoid|do'?s|don'?t|should i|what to do|kya kar|kya na|बचूँ|बचें|बचना|क्या करें|न करें/i, ids: [] },
 ]);
 
 /** Returns the first matching intent name, or 'general'. */
@@ -67,23 +68,34 @@ export function describeAdvice(rec, translate) {
 
 /**
  * Offline answer built from the same plan the UI shows.
- * @param {{question:string, plan:object, risk:object, translate:Function}} input
+ * @param {{question:string, plan:object, risk:object, translate:Function,
+ *   dosDonts?: {dos:Array, donts:Array}}} input
  */
-export function localAnswer({ question, plan, risk, translate }) {
+export function localAnswer({ question, plan, risk, translate, dosDonts = null }) {
+  const headline = translate('local.headline', {
+    aqi: risk.aqi,
+    band: translate(`band.${risk.band.key}`),
+    personal: translate(`band.${risk.personal.key}`),
+  });
+  const intentName = detectIntent(question);
+
+  if (intentName === 'dosdonts' && dosDonts) {
+    return [
+      headline,
+      translate('local.do'),
+      ...dosDonts.dos.slice(0, 3).map((d) => `✅ ${translate(`do.${d.id}`, d.params)}`),
+      translate('local.dont'),
+      ...dosDonts.donts.slice(0, 3).map((d) => `❌ ${translate(`dont.${d.id}`, d.params)}`),
+    ].join('\n');
+  }
+
   const all = flattenPlan(plan);
-  const intent = INTENTS.find((i) => i.name === detectIntent(question));
+  const intent = INTENTS.find((i) => i.name === intentName);
   let picked = intent ? all.filter((rec) => intent.ids.includes(rec.id)) : [];
   if (picked.length === 0) picked = all;
   picked = picked.slice(0, 3);
 
-  const lines = [
-    translate('local.headline', {
-      aqi: risk.aqi,
-      band: translate(`band.${risk.band.key}`),
-      personal: translate(`band.${risk.personal.key}`),
-    }),
-    translate('local.intro'),
-  ];
+  const lines = [headline, translate('local.intro')];
   for (const rec of picked) {
     const text = describeAdvice(rec, translate);
     lines.push(`• ${text.title}: ${text.action} ${translate('local.why')} ${text.why}`);
@@ -111,9 +123,9 @@ export function buildSystemPrompt(lang) {
 /**
  * Grounded user prompt: structured context + the delimited question.
  * @param {{question:string, place:string, snapshot:object|null, risk:object,
- *   profile:object, plan:object, translate:Function}} input
+ *   profile:object, plan:object, translate:Function, dosDonts?:object}} input
  */
-export function buildUserPrompt({ question, place, snapshot, risk, profile, plan, translate }) {
+export function buildUserPrompt({ question, place, snapshot, risk, profile, plan, translate, dosDonts = null }) {
   const context = {
     place: place || 'unknown',
     usAqi: risk.aqi,
@@ -125,6 +137,12 @@ export function buildUserPrompt({ question, place, snapshot, risk, profile, plan
       : 'simulated AQI, no live pollutant data',
     household: profile,
     plan: flattenPlan(plan).map((rec) => describeAdvice(rec, translate)),
+    dosAndDonts: dosDonts
+      ? {
+        do: dosDonts.dos.map((d) => translate(`do.${d.id}`, d.params)),
+        dont: dosDonts.donts.map((d) => translate(`dont.${d.id}`, d.params)),
+      }
+      : undefined,
   };
   return `<context>\n${JSON.stringify(context)}\n</context>\n<question>\n${sanitizeQuestion(question)}\n</question>`;
 }

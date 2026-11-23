@@ -5,6 +5,7 @@ A GenAI-powered assistant that helps people, families and communities get throug
 - **Low-emission daily routines** (when to go out, how to commute, what not to burn)
 - **Indoor air-quality hacks** (windows, purifiers, DIY filters, cooking smoke)
 - **Sustainable alternatives** (transit, clean cooking fuel, warmth without fires)
+- **Today's do's and don'ts**: a quick-glance ✅ / ❌ list that changes with the AQI and your household
 
 Every suggestion explains its **direct impact**: exposure avoided, % cleaner hours, or kg of CO₂ saved, calculated from your own inputs.
 
@@ -48,7 +49,8 @@ An animated **buddy** reacts to the air with light, funny motion graphics. Users
 2. **Personal risk level.** Raised **+1** for any sensitive member once AQI > 50, and **+1 more** for lung/heart conditions once AQI > 100 (capped at Hazardous). The mascot and the plan both follow this personal level, so the same air looks worse for an asthmatic household than for a healthy adult.
 3. **Forecast window.** A sliding 2-hour window over the next 24 h of PM2.5 finds the cleanest and dirtiest hours. It is only recommended if it is at least 10% cleaner.
 4. **Rules.** 27 small rules (in `js/advice.js`) each return a recommendation or nothing. Results are grouped into *Protect yourself / Low-emission routines / Indoor air hacks / Sustainable switches*, sorted by priority (Do now → Important → Good habit) and capped at 4 per group to stay readable.
-5. **Impact.** Numbers come from the user's inputs, for example *"Swapping your 12 km each-way drive for transit today avoids about 3.4 kg of CO₂"*.
+5. **Do's and don'ts.** Two short priority-ordered lists (`DO_RULES`, `DONT_RULES`, up to 6 each) give a one-glance summary, e.g. at AQI 420: *Do: stay indoors, get medical help fast for breathlessness or chest pain, wear an N95… Don't: step out unless essential, run outdoors, send kids out…*. They also feed the chat ("What should I avoid today?") and the Gemini prompt.
+6. **Impact.** Numbers come from the user's inputs, for example *"Swapping your 12 km each-way drive for transit today avoids about 3.4 kg of CO₂"*.
 
 ### GenAI assistant
 
@@ -68,13 +70,13 @@ index.html            Semantic, accessible markup + 3 inline SVG buddies
 favicon.svg
 css/styles.css        Layout, AQI colours, all mascot animations (CSS only)
 js/engine.js          Pure logic: AQI bands, risk, forecast window, CO₂ maths, parsing
-js/advice.js          Rule engine that builds the plan
+js/advice.js          Rule engine that builds the plan and the do/don't lists
 js/assistant.js       Gemini client, grounded prompts, offline answerer
 js/api.js             Open-Meteo clients with timeout + 10-minute cache
 js/i18n.js            English + Hindi strings and translator
 js/mascot.js          Mood mapping, buddy choice and rendering
 js/app.js             UI controller (the only file that touches the DOM)
-tests/*.test.js       41 unit tests (node:test, no dependencies)
+tests/*.test.js       48 unit tests (node:test, no dependencies)
 ```
 
 No frameworks, no build step and no runtime dependencies. The repository is well under 1 MB.
@@ -112,10 +114,10 @@ No frameworks, no build step and no runtime dependencies. The repository is well
 ## Testing
 
 ```bash
-npm test        # node --test, 41 tests, needs Node 20+
+npm test        # node --test, 48 tests, needs Node 20+
 ```
 
-Covers AQI band edges, input validation, personal risk, forecast windows (gaps, past hours, midnight wrap), response parsing, every rule path, CO₂ maths, prompt grounding and injection handling, Gemini error mapping (key in header, not URL), API caching/timeouts/validation, translation key and placeholder parity between English and Hindi, and buddy mood/character mapping.
+Covers AQI band edges, do/don't selection for clean vs hazardous air and different households, input validation, personal risk, forecast windows (gaps, past hours, midnight wrap), response parsing, every rule path, CO₂ maths, prompt grounding and injection handling, Gemini error mapping (key in header, not URL), API caching/timeouts/validation, translation key and placeholder parity between English and Hindi, and buddy mood/character mapping.
 
 ## Run locally
 
