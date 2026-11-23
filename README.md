@@ -104,7 +104,7 @@ No frameworks, no build step and no runtime dependencies. The repository is well
 
 ## Efficiency
 
-- Static site, about 100 KB uncompressed, zero dependencies, ES modules loaded natively.
+- Static site, about 150 KB uncompressed, zero dependencies, ES modules loaded natively.
 - One geocoding and one air-quality request per search; responses cached for 10 minutes; 12 s timeouts.
 - Slider and profile changes are coalesced to one render per animation frame.
 - Mascot motion is pure CSS and GPU-friendly.
