@@ -330,7 +330,7 @@ legend { font-weight: 700; padding: 0 .3rem; }
 }
 
 .mascot { display: block; width: min(240px, 70%); margin: 64px auto 8px; overflow: visible; }
-.motion-btn { position: absolute; right: 8px; bottom: 8px; background: rgb(255 255 255 / 92%); }
+.stage-tools { display: flex; justify-content: flex-end; margin-top: .4rem; }
 .buddy[hidden] { display: none; }
 
 /* Buddy picker */
@@ -364,6 +364,99 @@ legend { font-weight: 700; padding: 0 .3rem; }
 .stage[data-mood="cough"], .stage[data-mood="mask"] { --leaf: #9bb54a; --leaf-line: #5b7a1f; }
 .stage[data-mood="gasmask"] { --leaf: #a89f3c; --leaf-line: #6b6420; }
 .stage[data-mood="faint"] { --leaf: #b45309; --leaf-line: #78350f; }
+
+/* ---------- Good-air scene: birds, kite, playground, bicycle ---------- */
+.flock { position: absolute; top: 74px; left: 0; width: 100%; height: 40px; opacity: 0; transition: opacity .8s ease; animation: fly 16s linear infinite; }
+.bird { position: absolute; width: 22px; height: 11px; overflow: visible; }
+.bird path { fill: none; stroke: #1f2937; stroke-width: 2; stroke-linecap: round; }
+.bird:nth-child(1) { left: 0; top: 8px; }
+.bird:nth-child(2) { left: 28px; top: 0; width: 18px; }
+.bird:nth-child(3) { left: 30px; top: 20px; width: 16px; }
+.bird:nth-child(4) { left: 56px; top: 10px; width: 14px; }
+.bird path { transform-box: fill-box; transform-origin: center; animation: flap .32s ease-in-out infinite alternate; }
+.bird:nth-child(2) path { animation-delay: -.12s; }
+.bird:nth-child(3) path { animation-delay: -.2s; }
+
+.kite { position: absolute; top: 70px; right: 8%; width: 46px; opacity: 0; transition: opacity .8s ease; overflow: visible; }
+.kite-sail { fill: #f97316; stroke: #9a3412; stroke-width: 2; }
+.kite-spar { stroke: #fff7ed; stroke-width: 1.5; }
+.kite-tail { fill: #16a34a; }
+.kite-string { fill: none; stroke: #475569; stroke-width: 1; }
+.kite-body { transform-box: view-box; transform-origin: 30px 46px; animation: kite 2.6s ease-in-out infinite alternate; }
+
+.swing, .slide { position: absolute; bottom: 2px; width: 27%; max-width: 120px; overflow: visible; }
+.swing { left: 1%; }
+.slide { right: 1%; }
+.pg-frame { fill: none; stroke: #92400e; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+.pg-chain { stroke: #6b7280; stroke-width: 1.5; }
+.pg-seat { fill: #b45309; }
+.pg-ladder { fill: none; stroke: #2563eb; stroke-width: 3; stroke-linecap: round; }
+.pg-platform { fill: #1d4ed8; }
+.pg-slide { fill: none; stroke: #f59e0b; stroke-width: 8; stroke-linecap: round; }
+.kid-leg { fill: none; stroke: #1e3a8a; stroke-width: 3.5; stroke-linecap: round; }
+.kid-arm { fill: none; stroke-width: 3; stroke-linecap: round; }
+.kid-red { fill: #f43f5e; }
+.kid-green { fill: #22c55e; }
+.kid-skin-1 { fill: #c68642; stroke: #c68642; }
+.kid-skin-2 { fill: #8d5524; stroke: #8d5524; }
+.kid-head { stroke: none; }
+.kid-hair { fill: #1f2937; }
+.kid-smile { fill: none; stroke: #1f2937; stroke-width: 1.5; stroke-linecap: round; }
+.pg-kid { opacity: 0; transition: opacity .8s ease; }
+
+.sw-seat { transform-box: view-box; transform-origin: 50px 20px; animation: swing-empty 4s ease-in-out infinite alternate; }
+.sl-kid { transform-box: view-box; }
+
+[data-mood="happy"] .flock { opacity: 1; }
+[data-mood="meh"] .flock { opacity: .55; }
+[data-mood="happy"] .kite { opacity: 1; }
+[data-mood="happy"] .pg-kid, [data-mood="meh"] .pg-kid { opacity: 1; }
+[data-mood="happy"] .sw-seat, [data-mood="meh"] .sw-seat { animation: swing 1.6s ease-in-out infinite alternate; }
+[data-mood="happy"] .sl-kid, [data-mood="meh"] .sl-kid { animation: slide-down 3.4s ease-in infinite; }
+
+/* Bicycle (only in good air) */
+.m-bike { display: none; }
+.m-tyre { fill: none; stroke: #1f2937; stroke-width: 4.5; }
+.m-rim { fill: none; stroke: #9ca3af; stroke-width: 1.5; }
+.m-spokes path { stroke: #9ca3af; stroke-width: 1.2; }
+.m-hub { fill: #374151; }
+.m-frame { fill: none; stroke: #0f766e; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
+.m-saddle { fill: #1f2937; }
+.m-bar { fill: none; stroke: #1f2937; stroke-width: 4; stroke-linecap: round; }
+.m-crank circle { fill: none; stroke: #374151; stroke-width: 2.5; }
+.m-crank path { fill: none; stroke: #374151; stroke-width: 3; stroke-linecap: round; }
+.m-speed path { stroke: #fff; stroke-width: 3; stroke-linecap: round; opacity: .9; }
+.m-seat { transition: transform .6s ease; }
+
+[data-mood="happy"] .m-bike { display: inline; }
+[data-mood="happy"] .c-shadow { display: none; }
+[data-mood="happy"][data-character="twins"] .m-seat { transform: translate(42px, 13px) scale(.58); }
+[data-mood="happy"][data-character="cloud"] .m-seat { transform: translate(40px, 32px) scale(.6); }
+[data-mood="happy"][data-character="tulsi"] .m-seat { transform: translate(42px, 9px) scale(.58); }
+.m-spokes, .m-crank { transform-box: fill-box; transform-origin: center; }
+[data-mood="happy"] .m-spokes, [data-mood="happy"] .m-crank { animation: spin .9s linear infinite; }
+[data-mood="happy"] .m-ride { animation: ride 3s ease-in-out infinite alternate; }
+[data-mood="happy"] .m-speed path { animation: speed .6s linear infinite; }
+[data-mood="happy"] .m-speed path:nth-child(2) { animation-delay: .2s; }
+[data-mood="happy"] .m-speed path:nth-child(3) { animation-delay: .4s; }
+
+@keyframes fly { from { transform: translateX(-25%); } to { transform: translateX(110%); } }
+@keyframes flap { from { transform: scaleY(1); } to { transform: scaleY(.25); } }
+@keyframes kite { from { transform: rotate(-9deg) translateY(0); } to { transform: rotate(9deg) translateY(-4px); } }
+@keyframes swing { from { transform: rotate(-28deg); } to { transform: rotate(28deg); } }
+@keyframes swing-empty { from { transform: rotate(-6deg); } to { transform: rotate(6deg); } }
+@keyframes slide-down {
+  0%, 18% { transform: translate(0, 0); opacity: 1; }
+  45% { transform: translate(-24px, 12px); }
+  65% { transform: translate(-40px, 34px); }
+  80% { transform: translate(-58px, 52px); opacity: 1; }
+  88% { transform: translate(-68px, 56px); opacity: 0; }
+  89% { transform: translate(0, 0); opacity: 0; }
+  100% { transform: translate(0, 0); opacity: 1; }
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes ride { from { transform: translateX(-8px); } to { transform: translateX(8px); } }
+@keyframes speed { from { transform: translateX(8px); opacity: 0; } 40% { opacity: .9; } to { transform: translateX(-12px); opacity: 0; } }
 
 /* ---------- Shared parts ---------- */
 .m-body { fill: var(--body); stroke: var(--body-line); stroke-width: 3; transition: fill .8s ease, stroke .8s ease; }

@@ -9,7 +9,7 @@ A GenAI-powered assistant that helps people, families and communities get throug
 
 Every suggestion explains its **direct impact**: exposure avoided, % cleaner hours, or kg of CO₂ saved, calculated from your own inputs.
 
-An animated **buddy** reacts to the air with light, funny motion graphics. Users pick one of three: **Phephde Brothers** (two lungs, the default), **Badal** (a cloud) or **Tulsi** (a potted plant). In clean air the buddy dances; as AQI rises it sweats, coughs, puts on an N95, then a gas mask, and at hazardous levels faints dramatically with a white flag (the cloud turns black and rains soot, the tulsi wilts). The whole app works in **English and Hindi**.
+An animated **buddy** reacts to the air with light, funny motion graphics. Users pick one of three: **Phephde Brothers** (two lungs, the default), **Badal** (a cloud) or **Tulsi** (a potted plant). In clean air the whole scene comes alive: the buddy rides a bicycle, birds fly, a kite sways and kids play on the swing and slide in the park. As the air worsens the kids go indoors and the swing hangs empty, while the buddy sweats, coughs, puts on an N95, then a gas mask, and at hazardous levels faints dramatically with a white flag (the cloud turns black and rains soot, the tulsi wilts). The whole app works in **English and Hindi**.
 
 > **Live demo:** https://dhirajkhobragade25-droid.github.io/urban-air-assistant/
 
