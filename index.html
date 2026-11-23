@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src https://air-quality-api.open-meteo.com https://geocoding-api.open-meteo.com https://generativelanguage.googleapis.com; base-uri 'none'; form-action 'none'">
+  <meta name="referrer" content="no-referrer">
+  <meta name="description" content="A GenAI assistant that turns live air-quality data into a personal plan: low-emission routines, indoor air hacks and sustainable switches, with the impact of each choice explained.">
+  <meta name="theme-color" content="#0f766e">
+  <title>Urban Air Quality Assistant</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main" data-i18n="skip">Skip to main content</a>
+
+  <header class="site-header">
+    <div class="brand">
+      <img src="favicon.svg" alt="" width="40" height="40">
+      <div>
+        <h1 data-i18n="app.title">Urban Air Quality Assistant</h1>
+        <p class="tagline" data-i18n="app.tagline">Live smog check, a plan made for you, and a lungs buddy who reacts.</p>
+      </div>
+    </div>
+    <div class="lang-switch" role="group" aria-labelledby="lang-label">
+      <span id="lang-label" class="visually-hidden" data-i18n="lang.label">Language</span>
+      <button type="button" class="lang-btn" data-lang="en" aria-pressed="true">EN</button>
+      <button type="button" class="lang-btn" data-lang="hi" aria-pressed="false" lang="hi">हिं</button>
+    </div>
+  </header>
+
+  <main id="main" tabindex="-1">
+    <!-- 1. Location -->
+    <section class="card" aria-labelledby="loc-heading">
+      <h2 id="loc-heading" data-i18n="loc.heading">1. Where are you?</h2>
+      <form id="search-form" class="search" novalidate>
+        <label for="city-input" data-i18n="loc.city">City or area</label>
+        <div class="row">
+          <input id="city-input" name="city" type="search" autocomplete="address-level2" maxlength="80" required data-i18n-placeholder="loc.placeholder" placeholder="e.g. Delhi, Kolkata, Lahore">
+          <button type="submit" class="btn btn-primary" data-i18n="loc.search">Check air</button>
+        </div>
+      </form>
+      <button id="gps-btn" type="button" class="btn btn-ghost" data-i18n="loc.gps">Use my location</button>
+      <div id="place-results" class="place-results" hidden>
+        <p id="place-results-label" data-i18n="loc.results">Choose a place:</p>
+        <ul aria-labelledby="place-results-label"></ul>
+      </div>
+      <p id="status" class="status" role="status" aria-live="polite"></p>
+    </section>
+
+    <!-- 2. Air + mascot -->
+    <section class="card" aria-labelledby="air-heading">
+      <h2 id="air-heading" data-i18n="air.heading">2. Your air right now</h2>
+      <div class="air-grid">
+        <figure id="stage" class="stage" data-mood="happy">
+          <div class="sky" aria-hidden="true">
+            <div class="sun"></div>
+            <div class="cloud cloud-1"></div>
+            <div class="cloud cloud-2"></div>
+            <div class="smog smog-1"></div>
+            <div class="smog smog-2"></div>
+            <div class="particles"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+            <svg class="skyline" viewBox="0 0 400 80" preserveAspectRatio="none" focusable="false"><path d="M0 80V52h26V30h24v18h14V22h26v28h22V36h18V12h20v30h24v14h22V26h26v20h22V32h18v18h24V16h22v26h24v14h22V36h24v44z"/></svg>
+          </div>
+
+          <p class="bubble" data-role="bubble" aria-hidden="true"></p>
+
+          <svg class="mascot" viewBox="-20 -10 240 215" role="img" aria-labelledby="mascot-title" focusable="false">
+            <title id="mascot-title" data-role="mascot-title">Lungs buddy</title>
+            <g class="m-figure">
+              <g class="m-legs">
+                <path class="m-limb" d="M82 168 L78 190"/>
+                <path class="m-limb" d="M118 168 L122 190"/>
+                <ellipse class="m-foot" cx="74" cy="192" rx="9" ry="5"/>
+                <ellipse class="m-foot" cx="126" cy="192" rx="9" ry="5"/>
+              </g>
+              <g class="m-arm m-arm-l"><path class="m-limb" d="M40 118 Q24 110 14 94"/><circle class="m-hand" cx="14" cy="94" r="6"/></g>
+              <g class="m-arm m-arm-r"><path class="m-limb" d="M160 118 Q176 110 186 94"/><circle class="m-hand" cx="186" cy="94" r="6"/></g>
+
+              <rect class="m-trachea" x="92" y="20" width="16" height="54" rx="8"/>
+              <path class="m-rings" d="M92 34H108M92 46H108M92 58H108"/>
+              <path class="m-lobes" d="M100 70C86 58 44 62 36 104C28 146 52 176 80 172C92 170 98 164 100 158C102 164 108 170 120 172C148 176 172 146 164 104C156 62 114 58 100 70Z"/>
+              <path class="m-shine" d="M50 100Q54 86 66 80"/>
+              <path class="m-bronchi" d="M100 72Q90 80 72 84M100 72Q110 80 128 84"/>
+              <g class="m-cheeks"><ellipse cx="62" cy="126" rx="8" ry="5"/><ellipse cx="138" cy="126" rx="8" ry="5"/></g>
+              <g class="m-brows"><path d="M66 96L86 89"/><path d="M134 96L114 89"/></g>
+
+              <g class="m-eyes m-eyes-open">
+                <g class="m-eye-l"><ellipse class="m-eye" cx="78" cy="108" rx="10" ry="11"/><circle class="m-pupil" cx="80" cy="110" r="5"/><circle class="m-glint" cx="82" cy="107" r="1.6"/></g>
+                <g class="m-eye-r"><ellipse class="m-eye" cx="122" cy="108" rx="10" ry="11"/><circle class="m-pupil" cx="124" cy="110" r="5"/><circle class="m-glint" cx="126" cy="107" r="1.6"/></g>
+              </g>
+              <g class="m-eyes m-eyes-squint"><path d="M70 102L84 108L70 114"/><path d="M130 102L116 108L130 114"/></g>
+              <g class="m-eyes m-eyes-x"><path d="M71 101L85 115M85 101L71 115"/><path d="M115 101L129 115M129 101L115 115"/></g>
+              <g class="m-shades"><rect x="62" y="98" width="32" height="18" rx="7"/><rect x="106" y="98" width="32" height="18" rx="7"/><path class="m-shades-bridge" d="M94 104H106"/><path class="m-shades-shine" d="M68 103H76M112 103H120"/></g>
+
+              <path class="m-mouth m-mouth-smile" d="M86 126Q100 146 114 126Q100 132 86 126Z"/>
+              <path class="m-mouth m-mouth-flat" d="M89 135Q95 131 100 135Q105 139 111 134"/>
+              <ellipse class="m-mouth m-mouth-o" cx="100" cy="134" rx="7" ry="9"/>
+              <path class="m-mouth m-mouth-wavy" d="M86 136Q93 130 100 136Q107 142 114 136"/>
+
+              <path class="m-sweat" d="M156 80C151 89 151 96 156 96C161 96 161 89 156 80Z"/>
+              <g class="m-puffs"><circle class="m-puff m-puff-1" cx="118" cy="138" r="5"/><circle class="m-puff m-puff-2" cx="132" cy="131" r="7"/><circle class="m-puff m-puff-3" cx="148" cy="123" r="9"/></g>
+
+              <g class="m-mask"><path class="m-mask-straps" d="M80 124L42 112M120 124L158 112"/><path class="m-mask-cup" d="M78 122Q100 112 122 122Q124 142 100 152Q76 142 78 122Z"/><path class="m-mask-seam" d="M100 116V150"/></g>
+
+              <g class="m-gasmask"><path class="m-gm-strap" d="M42 106H158"/><circle class="m-goggle" cx="78" cy="108" r="15"/><circle class="m-goggle" cx="122" cy="108" r="15"/><path class="m-gm-strap" d="M93 106H107"/><rect class="m-snout" x="84" y="122" width="32" height="26" rx="11"/><circle class="m-canister" cx="100" cy="158" r="12"/><path class="m-canister-lines" d="M92 154H108M90 158H110M92 162H108"/></g>
+            </g>
+
+            <g class="m-stars">
+              <polygon points="0,-7 2,-2 7,-2 3,1 5,7 0,3 -5,7 -3,1 -7,-2 -2,-2" transform="translate(12 92)"/>
+              <polygon points="0,-7 2,-2 7,-2 3,1 5,7 0,3 -5,7 -3,1 -7,-2 -2,-2" transform="translate(34 74)"/>
+              <polygon points="0,-7 2,-2 7,-2 3,1 5,7 0,3 -5,7 -3,1 -7,-2 -2,-2" transform="translate(54 94)"/>
+            </g>
+            <g class="m-flag"><path class="m-pole" d="M182 196V122"/><path class="m-flag-cloth" d="M182 124L212 132L182 142Z"/></g>
+          </svg>
+
+          <button id="motion-btn" type="button" class="btn btn-tiny motion-btn" aria-pressed="false">Pause animation</button>
+        </figure>
+
+        <div id="readout" class="readout">
+          <p class="empty" data-i18n="air.empty">Search a city, use your location, or drag the “What if?” slider to begin.</p>
+        </div>
+      </div>
+
+      <div class="simulator">
+        <label for="sim-range" data-i18n="sim.label">What if? Try any AQI</label>
+        <div class="row">
+          <input id="sim-range" type="range" min="0" max="500" step="5" value="0" aria-describedby="sim-hint">
+          <output id="sim-output" for="sim-range" class="sim-output">0</output>
+        </div>
+        <p id="sim-hint" class="hint" data-i18n="sim.hint">Drag to see how your plan and your lungs buddy react.</p>
+        <button id="sim-reset" type="button" class="btn btn-ghost" data-i18n="sim.reset" hidden>Back to live data</button>
+      </div>
+    </section>
+
+    <!-- 3. Profile -->
+    <section class="card" aria-labelledby="profile-heading">
+      <h2 id="profile-heading" data-i18n="profile.heading">3. About you</h2>
+      <p class="hint" data-i18n="profile.hint">Your plan updates as you change these. Saved only on this device.</p>
+      <form id="profile-form" class="profile" novalidate>
+        <fieldset>
+          <legend data-i18n="profile.who">Anyone at home who is more sensitive?</legend>
+          <label class="check"><input type="checkbox" name="children"> <span data-i18n="profile.children">Children</span></label>
+          <label class="check"><input type="checkbox" name="elderly"> <span data-i18n="profile.elderly">Older adults (65+)</span></label>
+          <label class="check"><input type="checkbox" name="respiratory"> <span data-i18n="profile.respiratory">Asthma, lung or heart condition</span></label>
+          <label class="check"><input type="checkbox" name="pregnant"> <span data-i18n="profile.pregnant">Pregnancy</span></label>
+        </fieldset>
+        <div class="field-row">
+          <div class="field">
+            <label for="commute" data-i18n="profile.commute">Usual commute</label>
+            <select id="commute" name="commute">
+              <option value="car" data-i18n="commute.car">Car</option>
+              <option value="two_wheeler" data-i18n="commute.two_wheeler">Bike / scooter</option>
+              <option value="public" data-i18n="commute.public">Metro / bus</option>
+              <option value="walk_cycle" data-i18n="commute.walk_cycle">Walk / cycle</option>
+              <option value="wfh" data-i18n="commute.wfh">Work from home</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="commuteKm" data-i18n="profile.km">One-way distance (km)</label>
+            <input id="commuteKm" name="commuteKm" type="number" inputmode="decimal" min="0" max="200" step="1" value="10">
+          </div>
+          <div class="field">
+            <label for="cooking" data-i18n="profile.cooking">Main cooking fuel</label>
+            <select id="cooking" name="cooking">
+              <option value="lpg" data-i18n="cooking.lpg">LPG / piped gas</option>
+              <option value="induction" data-i18n="cooking.induction">Induction / electric</option>
+              <option value="biomass" data-i18n="cooking.biomass">Wood, coal or dung</option>
+            </select>
+          </div>
+        </div>
+        <fieldset>
+          <legend data-i18n="profile.habits">Habits</legend>
+          <label class="check"><input type="checkbox" name="purifier"> <span data-i18n="profile.purifier">I have an air purifier</span></label>
+          <label class="check"><input type="checkbox" name="outdoorExercise"> <span data-i18n="profile.exercise">I exercise outdoors</span></label>
+        </fieldset>
+      </form>
+    </section>
+
+    <!-- 4. Plan -->
+    <section class="card" aria-labelledby="plan-heading">
+      <h2 id="plan-heading" data-i18n="plan.heading">4. Your plan for today</h2>
+      <div id="plan" class="plan">
+        <p class="empty" data-i18n="plan.needData">Your plan appears here once there is an AQI to work with.</p>
+      </div>
+    </section>
+
+    <!-- 5. Assistant -->
+    <section class="card" aria-labelledby="chat-heading">
+      <h2 id="chat-heading" data-i18n="chat.heading">5. Ask the assistant</h2>
+      <p class="hint" data-i18n="chat.intro">Ask anything about today’s air. Answers use your city’s data and your profile.</p>
+      <ol id="chat-log" class="chat-log" aria-live="polite" aria-relevant="additions"></ol>
+      <div class="examples">
+        <span data-i18n="chat.try">Try:</span>
+        <button type="button" class="chip" data-example="chat.ex1" data-i18n="chat.ex1">Can I go for a run today?</button>
+        <button type="button" class="chip" data-example="chat.ex2" data-i18n="chat.ex2">Do I need a mask?</button>
+        <button type="button" class="chip" data-example="chat.ex3" data-i18n="chat.ex3">How do I cut smoke while cooking?</button>
+      </div>
+      <form id="chat-form" class="chat-form" novalidate>
+        <label for="chat-input" data-i18n="chat.label">Your question</label>
+        <div class="row">
+          <textarea id="chat-input" name="question" rows="2" maxlength="300" data-i18n-placeholder="chat.placeholder" placeholder="e.g. Can I go for a run this evening?"></textarea>
+          <button type="submit" class="btn btn-primary" data-i18n="chat.send">Ask</button>
+        </div>
+        <p id="chat-error" class="error" role="alert"></p>
+      </form>
+
+      <details class="ai-settings">
+        <summary data-i18n="ai.heading">Gemini AI settings (optional)</summary>
+        <p class="hint" data-i18n="ai.desc">Paste your own Gemini API key from Google AI Studio for AI answers.</p>
+        <form id="ai-form" novalidate>
+          <div class="field">
+            <label for="ai-key" data-i18n="ai.key">Gemini API key</label>
+            <input id="ai-key" name="apiKey" type="password" autocomplete="off" spellcheck="false" maxlength="100">
+          </div>
+          <div class="field">
+            <label for="ai-model" data-i18n="ai.model">Model</label>
+            <input id="ai-model" name="model" type="text" autocomplete="off" spellcheck="false" maxlength="60">
+          </div>
+          <label class="check"><input id="ai-remember" type="checkbox" name="remember"> <span data-i18n="ai.remember">Remember until this tab closes</span></label>
+          <div class="row">
+            <button type="submit" class="btn btn-primary" data-i18n="ai.save">Save</button>
+            <button id="ai-clear" type="button" class="btn btn-ghost" data-i18n="ai.clear">Remove key</button>
+          </div>
+          <p id="ai-status" class="status" role="status" aria-live="polite"></p>
+        </form>
+      </details>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p data-i18n="footer.disclaimer">General information, not medical advice.</p>
+    <p data-i18n="footer.data">Live data: Open-Meteo Air Quality API (CAMS). AI answers: Google Gemini.</p>
+  </footer>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
