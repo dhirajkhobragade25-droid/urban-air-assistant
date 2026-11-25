@@ -61,6 +61,7 @@ p { margin: 0 0 .75rem; }
 /* ---------- Layout ---------- */
 .site-header {
   display: flex;
+  position: relative;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
@@ -229,6 +230,70 @@ legend { font-weight: 700; padding: 0 .3rem; }
 .dd-do li::before { content: "✓"; color: #15803d; }
 .dd-dont li::before { content: "✕"; color: #b91c1c; }
 
+/* ---------- AQI badge on the stage ---------- */
+.stage-aqi {
+  position: absolute; top: 12px; right: 12px; z-index: 1;
+  display: grid; justify-items: center; gap: .1rem;
+  min-width: 74px; max-width: 104px; padding: .35rem .55rem;
+  border-radius: 12px; border-bottom: 5px solid var(--band-bar);
+  background: var(--band-bg); color: var(--band-text);
+  box-shadow: 0 3px 10px rgb(0 0 0 / 18%); text-align: center;
+}
+.stage-aqi[hidden] { display: none; }
+.stage-aqi strong { font-size: 1.5rem; line-height: 1; font-weight: 800; }
+.stage-aqi span { font-size: .68rem; font-weight: 700; line-height: 1.15; }
+.stage.has-aqi .bubble { right: 124px; }
+
+/* ---------- AQI colour scale ---------- */
+.aqi-scale { position: relative; margin: .8rem 0 .2rem; }
+.aqi-scale-bar { display: grid; grid-template-columns: repeat(6, 1fr); height: 10px; border-radius: 999px; overflow: hidden; }
+.aqi-scale-bar span:nth-child(1) { background: #16a34a; }
+.aqi-scale-bar span:nth-child(2) { background: #eab308; }
+.aqi-scale-bar span:nth-child(3) { background: #f97316; }
+.aqi-scale-bar span:nth-child(4) { background: #dc2626; }
+.aqi-scale-bar span:nth-child(5) { background: #9333ea; }
+.aqi-scale-bar span:nth-child(6) { background: #7f1d1d; }
+.aqi-marker {
+  position: absolute; top: -5px; left: var(--pos, 0%);
+  width: 20px; height: 20px; margin-left: -10px; border-radius: 50%;
+  background: #fff; border: 3.5px solid #1f2937; box-shadow: 0 1px 4px rgb(0 0 0 / 30%);
+  transition: left .4s ease;
+}
+.aqi-ticks { display: flex; justify-content: space-between; font-size: .72rem; color: var(--muted); margin: .35rem 0 .6rem; }
+
+/* ---------- Quick city chips ---------- */
+.quick-cities { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; margin-top: .7rem; font-size: .9rem; color: var(--muted); }
+
+/* ---------- Loading spinner on buttons ---------- */
+.btn.is-loading::before {
+  content: ""; display: inline-block; width: 1em; height: 1em; margin-right: .45em; vertical-align: -.15em;
+  border: 2.5px solid currentColor; border-right-color: transparent; border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+.readout[aria-busy="true"] { opacity: .6; transition: opacity .2s; }
+
+/* ---------- Collapsible plan groups ---------- */
+.plan-group { border: 1px solid var(--line); border-radius: 14px; padding: .2rem .8rem; background: #fff; }
+.plan-group[open] { padding-bottom: .8rem; }
+.plan-group summary {
+  display: flex; align-items: center; gap: .5rem; min-height: 48px; cursor: pointer; list-style: none;
+}
+.plan-group summary::-webkit-details-marker { display: none; }
+.plan-group summary h3 { margin: 0; flex: 1; }
+.plan-group summary::after {
+  content: ""; width: 10px; height: 10px; margin-right: 4px;
+  border-right: 2.5px solid var(--muted); border-bottom: 2.5px solid var(--muted);
+  transform: rotate(45deg); transition: transform .2s ease;
+}
+.plan-group[open] summary::after { transform: rotate(225deg); }
+.plan-count {
+  min-width: 1.6rem; height: 1.6rem; padding: 0 .4rem; border-radius: 999px;
+  display: inline-grid; place-items: center; font-size: .8rem; font-weight: 800;
+  background: var(--bg); color: var(--muted);
+}
+.plan-count.has-urgent { background: #fee2e2; color: #991b1b; }
+.plan-group ul { margin-top: .2rem; }
+
 /* ---------- Chat ---------- */
 .chat-log { list-style: none; padding: 0; margin: 0 0 .75rem; display: grid; gap: .6rem; }
 .msg { border-radius: 14px; padding: .6rem .8rem; max-width: 92%; }
@@ -272,7 +337,7 @@ legend { font-weight: 700; padding: 0 .3rem; }
 
 .sky { position: absolute; inset: 0; z-index: -1; }
 .sun {
-  position: absolute; top: 18px; right: 22px;
+  position: absolute; top: 72px; right: 18px;
   width: 54px; height: 54px; border-radius: 50%;
   background: radial-gradient(circle, #fff7ad 0 45%, #fde047 46% 70%, rgb(253 224 71 / 0%) 72%);
   opacity: var(--sun);
@@ -347,17 +412,21 @@ legend { font-weight: 700; padding: 0 .3rem; }
 .stage-tools { display: flex; justify-content: flex-end; margin-top: .4rem; }
 .buddy[hidden] { display: none; }
 
-/* Buddy picker */
-.buddy-picker { display: flex; flex-wrap: wrap; gap: .4rem; margin: .6rem 0 0; }
-.buddy-picker legend { font-size: .95rem; }
+/* Buddy picker: three tiles in one row */
+.buddy-picker { border: 0; padding: 0; margin: .5rem 0 0; min-inline-size: 0; }
+.buddy-picker legend { font-weight: 700; font-size: .95rem; padding: 0; margin-bottom: .35rem; }
+.buddy-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .45rem; }
 .buddy-option {
-  display: flex; align-items: center; gap: .4rem;
-  min-height: 40px; padding: .2rem .8rem; margin: 0;
-  border: 1.5px solid var(--line); border-radius: 999px;
-  font-weight: 600; cursor: pointer; background: #fff;
+  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .15rem;
+  min-height: 64px; padding: .4rem .3rem; margin: 0; text-align: center; line-height: 1.2;
+  border: 1.5px solid var(--line); border-radius: 12px; background: #fff;
+  font-size: .85rem; font-weight: 600; cursor: pointer;
 }
-.buddy-option input { width: 18px; height: 18px; accent-color: var(--primary); }
-.buddy-option:has(input:checked) { border-color: var(--primary); background: #ecfdf5; }
+.buddy-option input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+.buddy-emoji { font-size: 1.45rem; line-height: 1; }
+.buddy-option:hover { border-color: var(--primary); }
+.buddy-option:has(input:checked) { border: 2px solid var(--primary); background: #ecfdf5; color: var(--primary-dark); }
+.buddy-option:has(input:focus-visible) { outline: 3px solid var(--focus); outline-offset: 2px; }
 
 /* ---------- Colours per buddy and mood ---------- */
 .stage { --body: #ff8fab; --body-line: #d6336c; --leaf: #22c55e; --leaf-line: #15803d; }
@@ -391,7 +460,7 @@ legend { font-weight: 700; padding: 0 .3rem; }
 .bird:nth-child(2) path { animation-delay: -.12s; }
 .bird:nth-child(3) path { animation-delay: -.2s; }
 
-.kite { position: absolute; top: 70px; right: 8%; width: 46px; opacity: 0; transition: opacity .8s ease; overflow: visible; }
+.kite { position: absolute; top: 104px; left: 5%; width: 42px; opacity: 0; transition: opacity .8s ease; overflow: visible; }
 .kite-sail { fill: #f97316; stroke: #9a3412; stroke-width: 2; }
 .kite-spar { stroke: #fff7ed; stroke-width: 1.5; }
 .kite-tail { fill: #16a34a; }
@@ -620,6 +689,8 @@ legend { font-weight: 700; padding: 0 .3rem; }
   .stage, .stage * { animation: none !important; transition: none !important; }
   .stage[data-mood="faint"] .m-figure { transform: translateY(10px) rotate(-7deg) scaleY(.94); }
   .motion-btn { display: none; }
+  .btn.is-loading::before { animation-duration: 2.5s; }
+  .aqi-marker { transition: none; }
 }
 
 /* ---------- Larger screens ---------- */

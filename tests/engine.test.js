@@ -114,3 +114,14 @@ test('parseAirQuality rejects missing data', () => {
   assert.throws(() => parseAirQuality({ current: { time: 'x', us_aqi: null } }), (e) => e.code === 'noData');
   assert.equal(parseAirQuality({ current: { time: 't', us_aqi: 10 } }).hourly.length, 0);
 });
+
+test('aqiScalePosition places AQI on six equal-width bands', async () => {
+  const { aqiScalePosition } = await import('../js/engine.js');
+  assert.equal(aqiScalePosition(0), 0);
+  assert.equal(aqiScalePosition(50), 16.7, 'end of Good = 1/6');
+  assert.equal(aqiScalePosition(100), 33.3);
+  assert.equal(aqiScalePosition(175), 58.3, 'middle of Unhealthy');
+  assert.equal(aqiScalePosition(400), 91.7, 'Hazardous scaled to 500');
+  assert.equal(aqiScalePosition(900), 100, 'clamped');
+  assert.throws(() => aqiScalePosition(-1), RangeError);
+});

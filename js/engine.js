@@ -89,6 +89,21 @@ export function normalizeProfile(input = {}) {
   };
 }
 
+/** Upper end of the AQI scale drawn in the UI (the last band is open-ended). */
+export const SCALE_MAX = 500;
+
+/**
+ * Position of `aqi` on a scale where each of the six bands gets equal width.
+ * @returns {number} percentage 0–100, one decimal
+ */
+export function aqiScalePosition(aqi) {
+  const index = bandIndex(aqi);
+  const lower = index === 0 ? 0 : AQI_BANDS[index - 1].max;
+  const upper = Number.isFinite(AQI_BANDS[index].max) ? AQI_BANDS[index].max : SCALE_MAX;
+  const fraction = Math.min(Math.max((aqi - lower) / (upper - lower), 0), 1);
+  return Math.round(((index + fraction) / AQI_BANDS.length) * 1000) / 10;
+}
+
 /** True when anyone in the household belongs to a sensitive group. */
 export function isSensitive(profile) {
   const p = normalizeProfile(profile);

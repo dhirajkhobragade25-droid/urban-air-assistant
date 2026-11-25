@@ -177,7 +177,8 @@ export async function askGemini({
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: systemPrompt }] },
         contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
-        generationConfig: { temperature: 0.4, maxOutputTokens: 700 },
+        // Sampling parameters (temperature, topP, topK) are deprecated for current Gemini models.
+        generationConfig: { maxOutputTokens: 700 },
       }),
       signal: controller.signal,
     });

@@ -2,7 +2,9 @@
  * UI controller: wires the DOM to the pure modules.
  * All dynamic text is set with textContent (never innerHTML).
  */
-import { DEFAULT_PROFILE, normalizeProfile, findBestWindow, formatRange, whoMultiple } from './engine.js';
+import {
+  DEFAULT_PROFILE, normalizeProfile, findBestWindow, formatRange, whoMultiple, aqiScalePosition,
+} from './engine.js';
 import { CATEGORIES, buildContext, buildPlan, buildDosDonts } from './advice.js';
 import { createTranslator, resolveLang, formatNumber } from './i18n.js';
 import { createAirClient } from './api.js';
@@ -54,6 +56,8 @@ const els = {
   stage: $('#stage'),
   motionBtn: $('#motion-btn'),
   buddyPicker: $('.buddy-picker'),
+  stageAqi: $('[data-role="stage-aqi"]'),
+  quickCities: $('.quick-cities'),
   readout: $('#readout'),
   simRange: $('#sim-range'),
   simOutput: $('#sim-output'),
@@ -104,6 +108,7 @@ const state = {
   requestId: 0,
   paused: false,
   frame: 0,
+  openGroups: new Map(), // category → user's open/closed choice
 };
 let T = createTranslator('en');
 
@@ -200,6 +205,7 @@ function renderReadout(view) {
     ]),
   );
   if (risk.raised) box.append(el('p', { class: 'raised', text: T('air.raised') }));
+  box.append(aqiScale(view.aqi));
 
   if (!snapshot) {
     box.append(el('p', { class: 'hint', text: T('air.simulated') }));
@@ -227,16 +233,38 @@ function renderReadout(view) {
   box.append(el('p', { class: 'updated', text: T('air.updated', { time: snapshot.time.slice(11, 16) }) }));
 }
 
+/** Colour scale with a marker; decorative because the band is also shown as text. */
+function aqiScale(aqi) {
+  const marker = el('span', { class: 'aqi-marker' });
+  marker.style.setProperty('--pos', `${aqiScalePosition(aqi)}%`);
+  return el('div', { class: 'aqi-scale', 'aria-hidden': 'true' }, [
+    el('div', { class: 'aqi-scale-bar' }, Array.from({ length: 6 }, () => el('span'))),
+    marker,
+    el('div', { class: 'aqi-ticks' }, ['0', '50', '100', '150', '200', '300', '500'].map((n) => el('span', { text: n }))),
+  ]);
+}
+
+function renderStageBadge(view) {
+  const badge = els.stageAqi;
+  badge.hidden = !view;
+  els.stage.classList.toggle('has-aqi', Boolean(view));
+  if (!view) return;
+  badge.dataset.band = view.risk.band.key;
+  badge.querySelector('strong').textContent = String(view.aqi);
+  badge.querySelector('span').textContent = T(`band.${view.risk.band.key}`);
+}
+
 function renderMascotView(view) {
   const mood = moodForLevel(view ? view.risk.level : 0);
   if (mood !== state.mood) {
     state.mood = mood;
     state.quipSeed += 1;
   }
+  renderStageBadge(view);
   renderMascot(els.stage, {
     character: state.character,
     mood,
-    quip: T(quipKey(mood, state.quipSeed)),
+    quip: T(view ? quipKey(mood, state.quipSeed) : 'quip.idle'),
     label: T('mascot.label', { name: T(`char.${state.character}`), mood: T(`mood.${mood}`) }),
   });
 }
@@ -260,15 +288,37 @@ function renderPlan(view) {
     return;
   }
   els.plan.append(renderDosDonts(view.dosDonts));
+  const total = CATEGORIES.reduce((sum, c) => sum + view.plan[c].length, 0);
   for (const category of CATEGORIES) {
     const items = view.plan[category];
-    els.plan.append(el('section', { class: 'plan-group', 'aria-labelledby': `plan-${category}` }, [
-      el('h3', { id: `plan-${category}`, text: T(`plan.cat.${category}`) }),
+    const urgent = items.some((rec) => rec.priority === 1);
+    // Open groups that need action now (or everything when the plan is short),
+    // unless the user has opened/closed this group themselves.
+    const open = state.openGroups.has(category) ? state.openGroups.get(category) : urgent || total <= 6;
+    const group = el('details', { class: 'plan-group', dataset: { category } }, [
+      el('summary', {}, [
+        el('h3', { id: `plan-${category}`, text: T(`plan.cat.${category}`) }),
+        el('span', { class: `plan-count${urgent ? ' has-urgent' : ''}`, text: String(items.length) }),
+      ]),
       items.length
         ? el('ul', {}, items.map(adviceCard))
         : el('p', { class: 'empty', text: T('plan.empty') }),
-    ]));
+    ]);
+    group.open = open;
+    els.plan.append(group);
   }
+}
+
+/**
+ * Remembers groups the user opens or closes. Uses the summary click (fired
+ * for mouse, touch and keyboard) because "toggle" also fires when the code
+ * opens a group, which is not a user choice.
+ */
+function onPlanSummaryClick(event) {
+  const summary = event.target.closest('details.plan-group > summary');
+  if (!summary) return;
+  const group = summary.parentElement;
+  state.openGroups.set(group.dataset.category, !group.open);
 }
 
 function renderDosDonts({ dos, donts }) {
@@ -283,9 +333,13 @@ function renderDosDonts({ dos, donts }) {
 }
 
 /* ---------- Location ---------- */
-function setLocating(busy) {
+function setLocating(busy, button = els.searchBtn) {
   els.searchBtn.disabled = busy;
   els.gpsBtn.disabled = busy;
+  els.quickCities.querySelectorAll('button').forEach((btn) => { btn.disabled = busy; });
+  button.classList.toggle('is-loading', busy);
+  if (!busy) [els.searchBtn, els.gpsBtn].forEach((btn) => btn.classList.remove('is-loading'));
+  els.readout.setAttribute('aria-busy', String(busy));
 }
 
 async function loadPlace(place) {
@@ -354,7 +408,7 @@ function onGps() {
     setStatus('status.gpsUnsupported', {}, true);
     return;
   }
-  setLocating(true);
+  setLocating(true, els.gpsBtn);
   setStatus('status.loading');
   navigator.geolocation.getCurrentPosition(
     async ({ coords }) => {
@@ -372,6 +426,13 @@ function onGps() {
     },
     { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 },
   );
+}
+
+function onQuickCity(event) {
+  const chip = event.target.closest('button[data-city]');
+  if (!chip) return;
+  els.cityInput.value = chip.dataset.city;
+  els.searchForm.requestSubmit();
 }
 
 /* ---------- Simulator ---------- */
@@ -581,6 +642,8 @@ function init() {
   els.profileForm.addEventListener('change', onProfileChange);
   els.profileForm.addEventListener('submit', (event) => event.preventDefault());
   els.buddyPicker.addEventListener('change', onBuddyChange);
+  els.quickCities.addEventListener('click', onQuickCity);
+  els.plan.addEventListener('click', onPlanSummaryClick);
   els.motionBtn.addEventListener('click', () => {
     state.paused = !state.paused;
     updateMotionButton();
