@@ -8,6 +8,8 @@ import { CATEGORIES, buildContext, buildPlan, buildDosDonts } from './advice.js'
 import { ACTIVITY_IDS, ROUTINE_HOURS, normalizeRoutine, planRoutine, summarizeImpact, formatHour } from './routine.js';
 import { createTranslator, resolveLang } from './i18n.js';
 import { PHASES, phaseForHour, gradeFor } from './grade.js';
+import { atmosphereFor, heroGlassFor } from './glass.js';
+import { enablePress, createLens } from './press.js';
 import { createAirClient } from './api.js';
 import { moodForLevel, quipKey, renderMascot, resolveCharacter, DEFAULT_CHARACTER } from './mascot.js';
 import {
@@ -37,6 +39,11 @@ const els = {
   motionBtn: $('#motion-btn'),
   buddyPicker: $('.buddy-picker'),
   phasePicker: $('.phase-picker'),
+  phaseOptions: $('.phase-options'),
+  atmosphere: $('#atmosphere'),
+  themeColour: $('meta[name="theme-color"]'),
+  langSwitch: $('.lang-switch'),
+  tabbar: $('#tabbar'),
   readout: $('#readout'),
   simRange: $('#sim-range'),
   simOutput: $('#sim-output'),
@@ -99,15 +106,58 @@ function renderStatus() {
 }
 
 /* ---------- Static text & language ---------- */
+/* ---------- Glass lenses and the tab bar ---------- */
+const lensOptions = { reducedMotion: prefersReducedMotion };
+const lenses = {
+  lang: createLens(els.langSwitch, () => els.langSwitch.querySelector('.lang-btn[aria-pressed="true"]'), lensOptions),
+  phase: createLens(els.phaseOptions, () => els.phaseOptions.querySelector('input:checked')?.closest('.phase-option'), lensOptions),
+  tabs: createLens(els.tabbar, () => els.tabbar.querySelector('.tab[aria-current]'), lensOptions),
+};
+let sectionSpyPausedUntil = 0;
+
+function setActiveTab(sectionId, animate = true) {
+  els.tabbar.querySelectorAll('.tab').forEach((tab) => {
+    if (tab.dataset.section === sectionId) tab.setAttribute('aria-current', 'location');
+    else tab.removeAttribute('aria-current');
+  });
+  lenses.tabs.update(animate);
+}
+
+/** Tab tap: glide the lens, scroll to the section and move focus to its heading. */
+function onTabClick(event) {
+  const tab = event.target.closest('.tab');
+  const section = tab && document.getElementById(tab.dataset.section);
+  if (!section) return;
+  event.preventDefault();
+  setActiveTab(section.id);
+  sectionSpyPausedUntil = performance.now() + 1200; // let the scroll finish before the spy takes over
+  section.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' });
+  section.querySelector('h2')?.focus({ preventScroll: true });
+}
+
+/** Lights the tab of whichever section crosses the upper middle of the screen. */
+function watchSections() {
+  if (typeof IntersectionObserver !== 'function') return;
+  const observer = new IntersectionObserver((entries) => {
+    if (performance.now() < sectionSpyPausedUntil) return;
+    const hit = entries.find((entry) => entry.isIntersecting);
+    if (hit) setActiveTab(hit.target.id);
+  }, { rootMargin: '-35% 0px -60% 0px' });
+  document.querySelectorAll('main > section[id]').forEach((section) => observer.observe(section));
+}
+
 function applyStaticText() {
   document.documentElement.lang = state.lang;
   document.title = T('app.title');
   document.querySelectorAll('[data-i18n]').forEach((node) => { node.textContent = T(node.dataset.i18n); });
   document.querySelectorAll('[data-i18n-placeholder]').forEach((node) => { node.placeholder = T(node.dataset.i18nPlaceholder); });
   document.querySelectorAll('[data-i18n-label]').forEach((node) => {
-    node.setAttribute('aria-label', T(node.dataset.i18nLabel, { activity: T(node.dataset.i18nActivity) }));
+    const params = node.dataset.i18nActivity ? { activity: T(node.dataset.i18nActivity) } : {};
+    node.setAttribute('aria-label', T(node.dataset.i18nLabel, params));
   });
   document.querySelectorAll('.lang-btn').forEach((btn) => btn.setAttribute('aria-pressed', String(btn.dataset.lang === state.lang)));
+  lenses.lang.update();
+  lenses.tabs.update(false);
   updateMotionButton();
 }
 
@@ -171,6 +221,13 @@ function renderHero(view) {
   const band = view ? view.risk.band.key : 'good';
   const grade = gradeFor(phase, band);
   for (const [name, value] of Object.entries(grade.vars)) els.stage.style.setProperty(name, value);
+  const glass = heroGlassFor(grade.ink);
+  els.stage.style.setProperty('--hero-glass', glass.css);
+  els.stage.dataset.glass = glass.tone;
+  // The page backdrop takes the same light, washed out so glass text still reads.
+  const atmosphere = atmosphereFor(grade);
+  for (const [name, value] of Object.entries(atmosphere)) els.atmosphere.style.setProperty(name, value);
+  els.themeColour?.setAttribute('content', atmosphere['--atmo-1']);
   els.stage.dataset.band = band;
   els.stage.dataset.phase = grade.phase;
   els.stage.dataset.night = String(grade.phase === 'night');
@@ -180,6 +237,7 @@ function renderHero(view) {
 function onPhaseChange(event) {
   if (event.target.name !== 'phase') return;
   state.phase = PHASES.includes(event.target.value) ? event.target.value : 'auto';
+  lenses.phase.update();
   renderHero(state.view);
 }
 
@@ -598,12 +656,17 @@ function bindEvents() {
   els.aiForm.addEventListener('submit', onAiSave);
   els.aiClear.addEventListener('click', onAiClear);
   document.querySelectorAll('.lang-btn').forEach((btn) => btn.addEventListener('click', () => setLang(btn.dataset.lang)));
+  els.tabbar.addEventListener('click', onTabClick);
+  enablePress(document, { reducedMotion: prefersReducedMotion });
 }
 
 function init() {
   restoreSettings();
   bindEvents();
+  setActiveTab('sec-place', false);
   applyStaticText();
+  lenses.phase.update(false);
+  watchSections();
   renderAiStatus();
   render();
 

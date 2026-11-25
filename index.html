@@ -2,16 +2,17 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src https://air-quality-api.open-meteo.com https://geocoding-api.open-meteo.com https://generativelanguage.googleapis.com; base-uri 'none'; form-action 'none'">
   <meta name="referrer" content="no-referrer">
   <meta name="description" content="A GenAI assistant that turns live air-quality data into a personal plan: low-emission routines, indoor air hacks and sustainable switches, with the impact of each choice explained.">
-  <meta name="theme-color" content="#0f766e">
+  <meta name="theme-color" content="#f3f1ec">
   <title>Urban Air Quality Assistant</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
+  <div class="atmosphere" id="atmosphere" aria-hidden="true"></div>
   <a class="skip-link" href="#main" data-i18n="skip">Skip to main content</a>
 
   <header class="site-header">
@@ -24,6 +25,7 @@
     </div>
     <div class="lang-switch" role="group" aria-labelledby="lang-label">
       <span id="lang-label" class="visually-hidden" data-i18n="lang.label">Language</span>
+      <span class="lens" aria-hidden="true" hidden></span>
       <button type="button" class="lang-btn" data-lang="en" aria-pressed="true">EN</button>
       <button type="button" class="lang-btn" data-lang="hi" aria-pressed="false" lang="hi">हिं</button>
     </div>
@@ -32,8 +34,8 @@
   <main id="main" tabindex="-1">
     <noscript><p class="panel">This app needs JavaScript to fetch live air quality. Please enable it and reload.</p></noscript>
     <!-- 1. Location -->
-    <section class="panel" aria-labelledby="loc-heading">
-      <h2 id="loc-heading" data-i18n="loc.heading">Where are you?</h2>
+    <section class="panel" id="sec-place" aria-labelledby="loc-heading">
+      <h2 id="loc-heading" tabindex="-1" data-i18n="loc.heading">Where are you?</h2>
       <form id="search-form" class="search" novalidate>
         <label for="city-input" data-i18n="loc.city">City or area</label>
         <div class="row">
@@ -57,8 +59,8 @@
     </section>
 
     <!-- 2. Air + mascot -->
-    <section class="panel air" aria-labelledby="air-heading">
-      <h2 id="air-heading" data-i18n="air.heading">Your air right now</h2>
+    <section class="panel air" id="sec-air" aria-labelledby="air-heading">
+      <h2 id="air-heading" tabindex="-1" data-i18n="air.heading">Your air right now</h2>
       <figure id="stage" class="stage" data-mood="happy" data-character="twins" data-band="good" data-phase="afternoon" data-night="false">
           <div class="sky" aria-hidden="true">
             <div class="bloom"></div>
@@ -130,6 +132,7 @@
         <fieldset class="phase-picker">
           <legend data-i18n="phase.legend">Time of day</legend>
           <div class="phase-options">
+            <span class="lens" aria-hidden="true" hidden></span>
             <label class="phase-option"><input type="radio" name="phase" value="auto" checked><span data-i18n="phase.auto">Auto</span></label>
             <label class="phase-option"><input type="radio" name="phase" value="morning"><span data-i18n="phase.morning">Morning</span></label>
             <label class="phase-option"><input type="radio" name="phase" value="afternoon"><span data-i18n="phase.afternoon">Afternoon</span></label>
@@ -157,8 +160,8 @@
     </section>
 
     <!-- 3. Profile -->
-    <section class="panel" aria-labelledby="profile-heading">
-      <h2 id="profile-heading" data-i18n="profile.heading">About you</h2>
+    <section class="panel" id="sec-you" aria-labelledby="profile-heading">
+      <h2 id="profile-heading" tabindex="-1" data-i18n="profile.heading">About you</h2>
       <p class="hint" data-i18n="profile.hint">Your plan updates as you change these. Saved only on this device.</p>
       <form id="profile-form" class="profile" novalidate>
         <fieldset>
@@ -229,16 +232,16 @@
     </section>
 
     <!-- 4. Plan -->
-    <section class="panel" aria-labelledby="plan-heading">
-      <h2 id="plan-heading" data-i18n="plan.heading">Your plan for today</h2>
+    <section class="panel" id="sec-plan" aria-labelledby="plan-heading">
+      <h2 id="plan-heading" tabindex="-1" data-i18n="plan.heading">Your plan for today</h2>
       <div id="plan" class="plan">
         <p class="empty" data-i18n="plan.needData">Your plan appears here once there is an AQI to work with.</p>
       </div>
     </section>
 
     <!-- 5. Assistant -->
-    <section class="panel" aria-labelledby="chat-heading">
-      <h2 id="chat-heading" data-i18n="chat.heading">Ask the assistant</h2>
+    <section class="panel" id="sec-ask" aria-labelledby="chat-heading">
+      <h2 id="chat-heading" tabindex="-1" data-i18n="chat.heading">Ask the assistant</h2>
       <p class="hint" data-i18n="chat.intro">Ask anything about today’s air. Answers use your city’s data and your profile.</p>
       <ol id="chat-log" class="chat-log" aria-live="polite" aria-relevant="additions"></ol>
       <div class="examples">
@@ -285,6 +288,15 @@
     <p data-i18n="footer.disclaimer">General information, not medical advice.</p>
     <p data-i18n="footer.data">Live data: Open-Meteo Air Quality API (CAMS). AI answers: Google Gemini.</p>
   </footer>
+
+  <nav class="tabbar" id="tabbar" data-i18n-label="tabs.label" aria-label="Sections">
+    <span class="lens" aria-hidden="true" hidden></span>
+    <a class="tab" href="#sec-place" data-section="sec-place" aria-current="location"><svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.6-6.5-11.2a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="9.8" r="2.3"/></svg><span data-i18n="tab.place">Place</span></a>
+    <a class="tab" href="#sec-air" data-section="sec-air"><svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 8.5h10.5a3 3 0 1 0-3-3M3 12.5h14.5a3 3 0 1 1-3 3M3 16.5h6.5"/></svg><span data-i18n="tab.air">Air</span></a>
+    <a class="tab" href="#sec-you" data-section="sec-you"><svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="8" r="3.6"/><path d="M4.8 20.2a7.2 7.2 0 0 1 14.4 0"/></svg><span data-i18n="tab.you">You</span></a>
+    <a class="tab" href="#sec-plan" data-section="sec-plan"><svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="4" y="5" width="16" height="15.5" rx="3.5"/><path d="M8.5 3v4M15.5 3v4M4 10h16M8 14h3.5M8 17h7"/></svg><span data-i18n="tab.plan">Plan</span></a>
+    <a class="tab" href="#sec-ask" data-section="sec-ask"><svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 11.6a8 8 0 0 1-11.7 7.1L4 19.8l1.1-4A8 8 0 1 1 20 11.6z"/><path d="M8.5 11.5h.01M12 11.5h.01M15.5 11.5h.01"/></svg><span data-i18n="tab.ask">Ask</span></a>
+  </nav>
 
   <script type="module" src="js/app.js"></script>
 </body>
