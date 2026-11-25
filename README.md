@@ -70,30 +70,35 @@ All decisions are made by small, pure, unit-tested functions. The AI explains an
 ### Architecture
 
 ```
-            ┌──────────── index.html (semantic, accessible, strict CSP) ────────────┐
-            │                                                                        │
- user ─────►│  js/app.js  ── controller: state, events, renders ──┐                  │
-            │      │                                               │                  │
-            │      ├─ js/api.js ──► Open-Meteo geocoding + air quality (CAMS)        │
-            │      │                 current US AQI, PM2.5, PM10, NO₂, O₃ + hourly    │
-            │      │                                                                  │
-            │      ├─ js/engine.js    AQI bands, risk, windows, headline, CO₂ maths   │
-            │      ├─ js/chart.js     smooth 24 h curve + AQI ring geometry            │
-            │      ├─ js/grade.js     time-of-day × smog colour grade, AA-checked     │
-            │      ├─ js/glass.js     time-of-day sky, glass tints, frost, AA-checked │
-            │      ├─ js/spring.js    damped-spring physics → animation keyframes     │
-            │      ├─ js/press.js     bouncy press, lenses, haptic tick               │
-            │      ├─ js/flow.js      one-time setup → live screen, demo, saved place │
-            │      ├─ js/routine.js   daily-routine re-planner + impact summary       │
-            │      ├─ js/advice.js    26 advice rules + do/don't lists                │
-            │      ├─ js/assistant.js grounded prompts ──► Google Gemini (optional)   │
-            │      │                  + offline intent-based answers                  │
-            │      ├─ js/views.js     builds DOM nodes (text only, never innerHTML)   │
-            │      ├─ js/mascot.js    risk → mood; CSS does the animation             │
-            │      ├─ js/i18n.js      English + Hindi strings                          │
-            │      ├─ js/dom.js       element helpers                                  │
-            │      └─ js/storage.js   safe local/session storage                       │
-            └────────────────────────────────────────────────────────────────────────┘
+            ┌─────────────── index.html (semantic, accessible, strict CSP) ────────────────┐
+            │                                                                              │
+ user ─────►│  js/app.js  ── entry point: restores settings, wires events                  │
+            │      │                                                                       │
+            │      ├─ js/ui/        one small module per part of the page:                 │
+            │      │    state · elements · render · screens · location · household         │
+            │      │    demo · chat · gemini · language · buddy · lenses · status          │
+            │      ├─ js/views/     DOM builders (text only, never innerHTML):             │
+            │      │    hero (AQI ring) · readout (curve, bars) · plan                     │
+            │      │                                                                       │
+            │      ├─ js/api.js ──► Open-Meteo geocoding + air quality (CAMS)              │
+            │      │                current US AQI, PM2.5, PM10, NO₂, O₃ + hourly          │
+            │      │                                                                       │
+            │      ├─ js/engine.js    AQI bands, risk, windows, headline, CO₂ maths        │
+            │      ├─ js/chart.js     smooth 24 h curve + AQI ring geometry                │
+            │      ├─ js/grade.js     time-of-day × smog colour grade, AA-checked          │
+            │      ├─ js/glass.js     time-of-day sky, glass tints, frost, AA-checked      │
+            │      ├─ js/spring.js    damped-spring physics → animation keyframes          │
+            │      ├─ js/press.js     bouncy press, lenses, haptic tick                    │
+            │      ├─ js/flow.js      one-time setup → live screen, demo, saved place      │
+            │      ├─ js/routine.js   daily-routine re-planner + impact summary            │
+            │      ├─ js/advice.js    26 advice rules + do/don't lists                     │
+            │      ├─ js/assistant.js grounded prompts ──► Google Gemini (optional)        │
+            │      │                  + offline intent-based answers                       │
+            │      ├─ js/mascot.js    risk → mood; CSS does the animation                  │
+            │      ├─ js/i18n.js      translator; strings in js/locales/                   │
+            │      ├─ js/dom.js       element helpers                                      │
+            │      └─ js/storage.js   safe local/session storage                           │
+            └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
 No framework, no build step, no runtime dependencies: plain ES modules and a self-hosted font, served as a static site.
@@ -101,8 +106,8 @@ No framework, no build step, no runtime dependencies: plain ES modules and a sel
 ### Data flow
 
 1. `api.js` geocodes the city and fetches current + 48 h hourly air quality (12 s timeout, 10-minute cache).
-2. `app.js` builds one **view** from the data, the household profile and the routine: risk, plan, do/don'ts, re-planned day and impact.
-3. `views.js` turns the view into DOM nodes; `mascot.js` sets the buddy's mood; CSS animates it.
+2. `ui/render.js` builds one **view** from the data, the household profile and the routine: risk, plan, do/don'ts, re-planned day and impact.
+3. The builders in `js/views/` turn the view into DOM nodes; `mascot.js` sets the buddy's mood; CSS animates it.
 4. The chat sends the **same view** to Gemini as structured context, so the AI and the screen always agree.
 
 ## Prompt design
@@ -141,15 +146,17 @@ When should we go out today?
 
 ## Setup
 
-**Requirements:** any modern browser. Node.js 20+ only for running the tests.
+**Requirements:** any modern browser. Node.js 20+ for the tests (22+ for the lint and format checks).
 
 ```bash
 git clone https://github.com/dhirajkhobragade25-droid/urban-air-assistant.git
 cd urban-air-assistant
 npm start            # serves the folder at http://localhost:8080 (python3 -m http.server)
-npm test             # 110 unit tests with node:test, no install needed
+npm test             # 111 unit tests with node:test, no install needed
 npm run coverage     # same tests with a coverage report
 npm run check        # syntax check of every module
+npm run lint         # ESLint (strict rules in eslint.config.js)
+npm run format:check # Prettier formatting
 ```
 
 Any static file server works (ES modules need `http://`, not `file://`).
@@ -172,10 +179,10 @@ Any static file server works (ES modules need `http://`, not `file://`).
 
 | Area | What we did |
 |---|---|
-| **Code quality** | Small single-purpose ES modules; all decisions in pure functions; views separated from the controller; JSDoc on public functions; no dependencies. |
+| **Code quality** | Small single-purpose ES modules (the UI is split per part of the page in `js/ui/`, views in `js/views/`, strings in `js/locales/`; no module over 350 lines, no function over 60); all decisions in pure functions; no circular imports; JSDoc on public functions; ESLint (strict, self-contained config: complexity, size, safety and clarity rules) and Prettier, both checked in CI on every push; no dependencies. |
 | **Security** | Strict Content-Security-Policy (self-hosted scripts/styles, network limited to Open-Meteo and Gemini, `base-uri`/`form-action` locked); no `innerHTML`; whitelist validation of profile, routine, coordinates, API key and model name; questions sanitised and capped at 300 characters; prompt-injection guard; the user's Gemini key stays in memory (or `sessionStorage` if they opt in) and is sent only to Google in the `x-goog-api-key` header, never in a URL; `no-referrer` policy. |
-| **Efficiency** | ~330 KB of code (~96 KB gzipped) plus ~250 KB for four Poppins weights, of which only the two body weights are preloaded; one geocode + one air request per search; 10-minute cache; request timeouts; stale responses ignored; slider and form input coalesced to one render per animation frame; animation uses only `transform`, `opacity` and registered colour properties; the buddy's mood hand-over and every touch spring use the Web Animations API; one set of delegated listeners drives the press feel for the whole page; backdrop blur only on the two small surfaces with detail behind them. |
-| **Testing** | 110 `node:test` unit tests, 100 % line coverage of the logic modules: AQI edges, risk, forecast windows, routine re-planning (move / keep / indoors / passed hours / no forecast), editorial headline, curve and AQI ring geometry, colour grade contrast for every time of day and AQI band, spring physics (under-, critically and over-damped; press depth, jelly lag, lens stretch), glass contrast for every text colour over every part of the page through the frost, the AQI never changing the page or card colours, CSS ↔ JS colour parity, self-hosted font and CSP, setup flow and saved-place validation (tampered storage is ignored), demo-only AQI controls, every advice rule path, CO₂ maths, prompt grounding and injection handling, Gemini error mapping, API caching and validation, storage failures, buddy rendering, and EN/HI translation parity. CI runs them on every push. |
+| **Efficiency** | ~340 KB of code (~93 KB gzipped) plus ~250 KB for four Poppins weights, of which only the two body weights are preloaded; every module preloaded with `modulepreload` so the browser fetches them in parallel instead of one import level at a time; one geocode + one air request per search; 10-minute cache; request timeouts; stale responses ignored; slider and form input coalesced to one render per animation frame; animation uses only `transform`, `opacity` and registered colour properties; the buddy's mood hand-over and every touch spring use the Web Animations API; one set of delegated listeners drives the press feel for the whole page; backdrop blur only on the two small surfaces with detail behind them. |
+| **Testing** | 111 `node:test` unit tests, 100 % line coverage of the logic modules: AQI edges, risk, forecast windows, routine re-planning (move / keep / indoors / passed hours / no forecast), editorial headline, curve and AQI ring geometry, colour grade contrast for every time of day and AQI band, spring physics (under-, critically and over-damped; press depth, jelly lag, lens stretch), glass contrast for every text colour over every part of the page through the frost, the AQI never changing the page or card colours, every module preloaded, CSS ↔ JS colour parity, self-hosted font and CSP, setup flow and saved-place validation (tampered storage is ignored), demo-only AQI controls, every advice rule path, CO₂ maths, prompt grounding and injection handling, Gemini error mapping, API caching and validation, storage failures, buddy rendering, and EN/HI translation parity. CI runs them on every push. |
 | **Accessibility** | Semantic landmarks and headings, labelled controls (including each time picker), skip link, visible focus, 44 px targets, status updates via `role="status"`, AQI never shown by colour alone, keyboard-operable buddy picker and collapsible groups, tab bar with `aria-current` that moves focus to the section heading, setup steps move focus to their heading, switches are real checkboxes with `role="switch"`, Settings is a native modal `<dialog>` (focus stays inside, Esc closes), Space/Enter presses get the same feedback as touch, every glass surface AA-checked, `prefers-reduced-motion`, `prefers-reduced-transparency`, `prefers-contrast` and forced colours respected, a Pause button (WCAG 2.2.2), the tab bar steps aside while the on-screen keyboard is up, full Hindi UI with correct `lang`. |
 | **Problem alignment** | Built around a family's daily routine and winter smog: low-emission routines, indoor air hacks, sustainable switches, location-specific live data and forecast, and the direct impact of every choice. |
 

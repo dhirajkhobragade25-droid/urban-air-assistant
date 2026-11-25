@@ -64,6 +64,8 @@ export function restorePlace(raw) {
   const longitude = Number(raw.longitude);
   if (!inRange(latitude, 90) || !inRange(longitude, 180)) return null;
   if (raw.labelKey === 'loc.myLocation') return { labelKey: 'loc.myLocation', latitude, longitude };
-  if (typeof raw.label === 'string' && raw.label.trim() && raw.label.length <= 160) return { label: raw.label.trim(), latitude, longitude };
+  if (typeof raw.label === 'string' && raw.label.trim() && raw.label.length <= 160) {
+    return { label: raw.label.trim(), latitude, longitude };
+  }
   return null;
 }

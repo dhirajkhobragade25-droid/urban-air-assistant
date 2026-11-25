@@ -13,9 +13,15 @@ function memoryArea() {
   };
 }
 const brokenArea = {
-  getItem() { throw new Error('denied'); },
-  setItem() { throw new Error('quota'); },
-  removeItem() { throw new Error('denied'); },
+  getItem() {
+    throw new Error('denied');
+  },
+  setItem() {
+    throw new Error('quota');
+  },
+  removeItem() {
+    throw new Error('denied');
+  },
 };
 
 test('openStorage returns a working area, or null when storage is blocked', () => {
@@ -63,7 +69,10 @@ test('renderMascot shows one buddy, its mood, line and label', () => {
   renderMascot(stage, { character: 'cloud', mood: 'cough', quip: 'cough cough', label: 'Badal: coughing' });
   assert.equal(stage.dataset.mood, 'cough');
   assert.equal(stage.dataset.character, 'cloud');
-  assert.deepEqual(stage.buddies.map((b) => b.hidden), [true, false, true]);
+  assert.deepEqual(
+    stage.buddies.map((b) => b.hidden),
+    [true, false, true],
+  );
   assert.equal(stage.bubble.textContent, 'cough cough');
   assert.ok(stage.titles.every((t) => t.textContent === 'Badal: coughing'));
   assert.ok(stage.classes.has('is-changing'), 'pop animation on change');
@@ -84,7 +93,10 @@ test('formatNumber uses Indian grouping in both languages', () => {
 test('a mood change glides each figure from its current pose to rest', async () => {
   const { GLIDE_MS, GLIDE_EASING } = await import('../js/mascot.js');
   const calls = [];
-  const figure = { pose: 'matrix(0.99, -0.12, 0.12, 0.99, 0, 10)', animate: (frames, opts) => calls.push({ frames, opts }) };
+  const figure = {
+    pose: 'matrix(0.99, -0.12, 0.12, 0.99, 0, 10)',
+    animate: (frames, opts) => calls.push({ frames, opts }),
+  };
   const resting = { pose: 'none', animate: () => calls.push('should not glide') };
   const stage = fakeStage();
   stage.dataset.mood = 'faint';

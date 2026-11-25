@@ -2,7 +2,15 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { t, keysFor, createTranslator, localizeParams, resolveLang, LANGS } from '../js/i18n.js';
 import { ADVICE_IDS } from '../js/advice.js';
-import { MOODS, QUIPS_PER_MOOD, CHARACTERS, DEFAULT_CHARACTER, moodForLevel, quipKey, resolveCharacter } from '../js/mascot.js';
+import {
+  MOODS,
+  QUIPS_PER_MOOD,
+  CHARACTERS,
+  DEFAULT_CHARACTER,
+  moodForLevel,
+  quipKey,
+  resolveCharacter,
+} from '../js/mascot.js';
 
 const placeholders = (text) => [...text.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort();
 

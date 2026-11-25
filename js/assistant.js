@@ -38,16 +38,56 @@ export const isValidModel = (model) => typeof model === 'string' && MODEL_PATTER
 /** Keyword intents (English + Hindi/Hinglish) mapped to advice ids. */
 const INTENTS = Object.freeze([
   { name: 'mask', pattern: /mask|n95|ffp2|respirator|मास्क/i, ids: ['mask', 'rider', 'emergency'] },
-  { name: 'routine', pattern: /when should|what time|best time|which time|routine|schedule|go out|kab|कब|किस समय/i, ids: ['best-window'] },
-  { name: 'exercise', pattern: /run|jog|exercise|workout|gym|walk|cycl|yoga|sport|play|दौड़|कसरत|टहल|खेल/i, ids: ['exercise-indoor', 'exercise-shift', 'outdoor-go', 'best-window', 'children'] },
-  { name: 'purifier', pattern: /purifier|hepa|filter|प्यूरीफ़ायर|प्यूरीफायर|फ़िल्टर|फिल्टर/i, ids: ['purifier', 'diy-purifier', 'windows'] },
-  { name: 'windows', pattern: /window|ventilat|air out|fresh air|खिड़की|हवा आने/i, ids: ['windows', 'ventilate', 'best-window'] },
-  { name: 'cooking', pattern: /cook|kitchen|chimney|stove|gas|lpg|induction|खाना|रसोई|चूल्हा|चिमनी/i, ids: ['cooking-vent', 'clean-fuel', 'induction'] },
-  { name: 'children', pattern: /child|kid|school|baby|infant|बच्च|स्कूल/i, ids: ['children', 'sensitive', 'best-window'] },
-  { name: 'commute', pattern: /commute|drive|car|bike|scooter|metro|bus|travel|office|traffic|गाड़ी|कार|बाइक|मेट्रो|ऑफ़िस|ऑफिस/i, ids: ['commute-today', 'rider', 'walker', 'wfh', 'transit-default', 'idling'] },
-  { name: 'health', pattern: /asthma|cough|breath|inhaler|heart|pregnan|elder|old|अस्थमा|खाँसी|खांसी|साँस|सांस|दिल|बुज़ुर्ग/i, ids: ['meds', 'sensitive', 'mask', 'emergency'] },
-  { name: 'impact', pattern: /impact|carbon|co2|co₂|emission|save|planet|असर|कार्बन|बचत/i, ids: ['transit-default', 'commute-today', 'clean-fuel', 'no-burning', 'induction'] },
-  { name: 'dosdonts', pattern: /avoid|do'?s|don'?t|should i|what to do|kya kar|kya na|बचूँ|बचें|बचना|क्या करें|न करें/i, ids: [] },
+  {
+    name: 'routine',
+    pattern: /when should|what time|best time|which time|routine|schedule|go out|kab|कब|किस समय/i,
+    ids: ['best-window'],
+  },
+  {
+    name: 'exercise',
+    pattern: /run|jog|exercise|workout|gym|walk|cycl|yoga|sport|play|दौड़|कसरत|टहल|खेल/i,
+    ids: ['exercise-indoor', 'exercise-shift', 'outdoor-go', 'best-window', 'children'],
+  },
+  {
+    name: 'purifier',
+    pattern: /purifier|hepa|filter|प्यूरीफ़ायर|प्यूरीफायर|फ़िल्टर|फिल्टर/i,
+    ids: ['purifier', 'diy-purifier', 'windows'],
+  },
+  {
+    name: 'windows',
+    pattern: /window|ventilat|air out|fresh air|खिड़की|हवा आने/i,
+    ids: ['windows', 'ventilate', 'best-window'],
+  },
+  {
+    name: 'cooking',
+    pattern: /cook|kitchen|chimney|stove|gas|lpg|induction|खाना|रसोई|चूल्हा|चिमनी/i,
+    ids: ['cooking-vent', 'clean-fuel', 'induction'],
+  },
+  {
+    name: 'children',
+    pattern: /child|kid|school|baby|infant|बच्च|स्कूल/i,
+    ids: ['children', 'sensitive', 'best-window'],
+  },
+  {
+    name: 'commute',
+    pattern: /commute|drive|car|bike|scooter|metro|bus|travel|office|traffic|गाड़ी|कार|बाइक|मेट्रो|ऑफ़िस|ऑफिस/i,
+    ids: ['commute-today', 'rider', 'walker', 'wfh', 'transit-default', 'idling'],
+  },
+  {
+    name: 'health',
+    pattern: /asthma|cough|breath|inhaler|heart|pregnan|elder|old|अस्थमा|खाँसी|खांसी|साँस|सांस|दिल|बुज़ुर्ग/i,
+    ids: ['meds', 'sensitive', 'mask', 'emergency'],
+  },
+  {
+    name: 'impact',
+    pattern: /impact|carbon|co2|co₂|emission|save|planet|असर|कार्बन|बचत/i,
+    ids: ['transit-default', 'commute-today', 'clean-fuel', 'no-burning', 'induction'],
+  },
+  {
+    name: 'dosdonts',
+    pattern: /avoid|do'?s|don'?t|should i|what to do|kya kar|kya na|बचूँ|बचें|बचना|क्या करें|न करें/i,
+    ids: [],
+  },
 ]);
 
 /** Returns the first matching intent name, or 'general'. */
@@ -118,14 +158,13 @@ export function localAnswer({ question, plan, risk, translate, dosDonts = null, 
 
 /** System instruction that keeps Gemini grounded, safe and on-topic. */
 export function buildSystemPrompt(lang) {
-  const language = lang === 'hi'
-    ? 'Reply in simple, friendly Hindi (Devanagari script).'
-    : 'Reply in simple, friendly English.';
+  const language =
+    lang === 'hi' ? 'Reply in simple, friendly Hindi (Devanagari script).' : 'Reply in simple, friendly English.';
   return [
     'You are the Urban Air Quality Assistant. You help ordinary people, families and communities cope with winter smog and urban air pollution.',
     'Use ONLY the live data and plan given inside <context>. Never invent AQI or pollutant numbers.',
-    'Give practical, specific advice: low-emission daily routines, indoor air-quality hacks and sustainable alternatives that fit the user\'s location and lifestyle.',
-    'When the question is about timing or the family\'s day, use dailyRoutinePlan: name the activity, the suggested time and the % less PM2.5 breathed in.',
+    "Give practical, specific advice: low-emission daily routines, indoor air-quality hacks and sustainable alternatives that fit the user's location and lifestyle.",
+    "When the question is about timing or the family's day, use dailyRoutinePlan: name the activity, the suggested time and the % less PM2.5 breathed in.",
     'For every suggestion, explain its direct impact in one short clause (exposure reduced, pollution avoided, or CO₂ saved, using the numbers in the context when available).',
     'Keep answers under 130 words, use short bullet points, no markdown headings, no tables.',
     'You are not a doctor. For severe symptoms such as breathlessness or chest pain, tell the user to seek medical care urgently.',
@@ -140,7 +179,15 @@ export function buildSystemPrompt(lang) {
  *   profile:object, plan:object, translate:Function, dosDonts?:object}} input
  */
 export function buildUserPrompt({
-  question, place, snapshot, risk, profile, plan, translate, dosDonts = null, routinePlan = null,
+  question,
+  place,
+  snapshot,
+  risk,
+  profile,
+  plan,
+  translate,
+  dosDonts = null,
+  routinePlan = null,
 }) {
   const context = {
     place: place || 'unknown',
@@ -155,15 +202,15 @@ export function buildUserPrompt({
     plan: flattenPlan(plan).map((rec) => describeAdvice(rec, translate)),
     dosAndDonts: dosDonts
       ? {
-        do: dosDonts.dos.map((d) => translate(`do.${d.id}`, d.params)),
-        dont: dosDonts.donts.map((d) => translate(`dont.${d.id}`, d.params)),
-      }
+          do: dosDonts.dos.map((d) => translate(`do.${d.id}`, d.params)),
+          dont: dosDonts.donts.map((d) => translate(`dont.${d.id}`, d.params)),
+        }
       : undefined,
     dailyRoutinePlan: routinePlan
       ? routinePlan.map((item) => {
-        const text = describeRoutineItem(item, translate);
-        return `${text.name}: ${text.text}${text.note ? ` ${text.note}` : ''}`;
-      })
+          const text = describeRoutineItem(item, translate);
+          return `${text.name}: ${text.text}${text.note ? ` ${text.note}` : ''}`;
+        })
       : undefined,
   };
   return `<context>\n${JSON.stringify(context)}\n</context>\n<question>\n${sanitizeQuestion(question)}\n</question>`;
@@ -172,7 +219,12 @@ export function buildUserPrompt({
 /** Pulls the answer text out of a generateContent response. */
 export function extractGeminiText(json) {
   const parts = json?.candidates?.[0]?.content?.parts;
-  const text = Array.isArray(parts) ? parts.map((p) => (typeof p.text === 'string' ? p.text : '')).join('\n').trim() : '';
+  const text = Array.isArray(parts)
+    ? parts
+        .map((p) => (typeof p.text === 'string' ? p.text : ''))
+        .join('\n')
+        .trim()
+    : '';
   if (!text) throw new AssistantError('empty');
   return text;
 }
@@ -184,8 +236,12 @@ const STATUS_CODES = { 400: 'key', 401: 'key', 403: 'key', 429: 'quota' };
  * URL) so it does not end up in logs or browser history.
  */
 export async function askGemini({
-  apiKey, model = DEFAULT_GEMINI_MODEL, systemPrompt, userPrompt,
-  fetchImpl = (...args) => globalThis.fetch(...args), timeoutMs = GEMINI_TIMEOUT_MS,
+  apiKey,
+  model = DEFAULT_GEMINI_MODEL,
+  systemPrompt,
+  userPrompt,
+  fetchImpl = (...args) => globalThis.fetch(...args),
+  timeoutMs = GEMINI_TIMEOUT_MS,
 }) {
   if (!isValidApiKey(apiKey)) throw new AssistantError('key');
   if (!isValidModel(model)) throw new AssistantError('badInput');

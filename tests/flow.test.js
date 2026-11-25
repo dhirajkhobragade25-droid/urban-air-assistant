@@ -1,8 +1,16 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  SCREENS, DEMO_START_AQI, normalizeSetup, startScreen, afterPlace, stepOf, demoStartAqi, shortPlace,
-  placeToStore, restorePlace,
+  SCREENS,
+  DEMO_START_AQI,
+  normalizeSetup,
+  startScreen,
+  afterPlace,
+  stepOf,
+  demoStartAqi,
+  shortPlace,
+  placeToStore,
+  restorePlace,
 } from '../js/flow.js';
 
 test('first run asks for the city, then the household; after that the app opens on live air', () => {
@@ -60,11 +68,21 @@ test('places round-trip through storage; GPS is saved as "my location", not a na
 
 test('a damaged or tampered saved place is ignored', () => {
   for (const raw of [
-    null, 'Delhi', {}, { label: 'X', latitude: 95, longitude: 10 }, { label: 'X', latitude: 10, longitude: -181 },
-    { label: '', latitude: 1, longitude: 1 }, { label: 'x'.repeat(200), latitude: 1, longitude: 1 },
-    { labelKey: 'evil.key', latitude: 1, longitude: 1 }, { label: 'X', latitude: 'a', longitude: 1 },
+    null,
+    'Delhi',
+    {},
+    { label: 'X', latitude: 95, longitude: 10 },
+    { label: 'X', latitude: 10, longitude: -181 },
+    { label: '', latitude: 1, longitude: 1 },
+    { label: 'x'.repeat(200), latitude: 1, longitude: 1 },
+    { labelKey: 'evil.key', latitude: 1, longitude: 1 },
+    { label: 'X', latitude: 'a', longitude: 1 },
   ]) {
     assert.equal(restorePlace(raw), null, JSON.stringify(raw));
   }
-  assert.deepEqual(restorePlace({ label: ' Pune ', latitude: '18.5', longitude: '73.8' }), { label: 'Pune', latitude: 18.5, longitude: 73.8 });
+  assert.deepEqual(restorePlace({ label: ' Pune ', latitude: '18.5', longitude: '73.8' }), {
+    label: 'Pune',
+    latitude: 18.5,
+    longitude: 73.8,
+  });
 });

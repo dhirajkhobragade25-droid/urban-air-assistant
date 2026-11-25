@@ -18,5 +18,9 @@ jobs:
           node-version: 22
       - name: Syntax check
         run: npm run check
+      - name: Lint
+        run: npm run lint
+      - name: Formatting
+        run: npm run format:check
       - name: Unit tests with coverage
         run: npm run coverage

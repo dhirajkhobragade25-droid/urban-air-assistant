@@ -1,0 +1,6 @@
+coverage/
+docs/
+fonts/
+*.md
+index.html
+css/

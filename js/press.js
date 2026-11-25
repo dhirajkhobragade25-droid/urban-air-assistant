@@ -12,8 +12,15 @@
 import { pressDepth, pressKeyframes, releaseKeyframes, glideKeyframes } from './spring.js';
 
 export const PRESSABLE = [
-  '.btn', '.chip', '.lang-btn', '.tab', '.phase-option', '.buddy-option',
-  '.plan-group > summary', '.ai-settings > summary', '.check',
+  '.btn',
+  '.chip',
+  '.lang-btn',
+  '.tab',
+  '.phase-option',
+  '.buddy-option',
+  '.plan-group > summary',
+  '.ai-settings > summary',
+  '.check',
 ].join(', ');
 
 const HAPTIC_MS = 8;
@@ -37,14 +44,16 @@ function currentScale(node) {
  * @param {Document|Element} root
  * @param {{reducedMotion?:() => boolean, vibrate?:(ms:number) => void}} options
  */
-export function enablePress(root, {
-  reducedMotion = () => false,
-  vibrate = (ms) => navigator.vibrate?.(ms),
-} = {}) {
+export function enablePress(root, { reducedMotion = () => false, vibrate = (ms) => navigator.vibrate?.(ms) } = {}) {
+  const presser = createPresser({ reducedMotion, vibrate });
+  bindPointer(root, presser);
+  bindKeys(root, presser);
+}
+
+/** The squish on press and the springy release, per control. */
+function createPresser({ reducedMotion, vibrate }) {
   const running = new WeakMap();
   const depths = new WeakMap();
-  const pointers = new Map();
-  const keyed = new Set();
 
   const play = (node, { keyframes, duration }, fill) => {
     running.get(node)?.cancel();
@@ -79,13 +88,23 @@ export function enablePress(root, {
     if (haptic) vibrate(HAPTIC_MS);
   }
 
-  root.addEventListener('pointerdown', (event) => {
-    if (event.button > 0) return;
-    const node = pressableFrom(event.target);
-    if (!node || isDisabled(node)) return;
-    pointers.set(event.pointerId, node);
-    press(node, event);
-  }, { passive: true });
+  return { press, release };
+}
+
+/** Finger and mouse presses; a touch release gives a haptic tick. */
+function bindPointer(root, { press, release }) {
+  const pointers = new Map();
+  root.addEventListener(
+    'pointerdown',
+    (event) => {
+      if (event.button > 0) return;
+      const node = pressableFrom(event.target);
+      if (!node || isDisabled(node)) return;
+      pointers.set(event.pointerId, node);
+      press(node, event);
+    },
+    { passive: true },
+  );
 
   const end = (event) => {
     const node = pointers.get(event.pointerId);
@@ -98,8 +117,11 @@ export function enablePress(root, {
   };
   root.addEventListener('pointerup', end, { passive: true });
   root.addEventListener('pointercancel', end, { passive: true });
+}
 
-  // Keyboard presses get the same feel (Space and Enter activate controls).
+/** Keyboard presses get the same feel (Space and Enter activate controls). */
+function bindKeys(root, { press, release }) {
+  const keyed = new Set();
   root.addEventListener('keydown', (event) => {
     if (event.repeat || (event.key !== ' ' && event.key !== 'Enter')) return;
     const node = pressableFrom(event.target);

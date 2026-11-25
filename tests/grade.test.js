@@ -1,16 +1,24 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import {
-  PHASES, phaseForHour, gradeFor, contrastRatio, mix, INK_DARK, INK_LIGHT, MIN_CONTRAST,
-} from '../js/grade.js';
+import { PHASES, phaseForHour, gradeFor, contrastRatio, mix, INK_DARK, INK_LIGHT, MIN_CONTRAST } from '../js/grade.js';
 import { AQI_BANDS } from '../js/engine.js';
 
 const HEX = /^#[0-9a-f]{6}$/;
 
 test('phaseForHour splits the day into morning, afternoon, evening and night', () => {
   const expected = {
-    0: 'night', 4: 'night', 5: 'morning', 10: 'morning', 11: 'afternoon', 15: 'afternoon',
-    16: 'evening', 19: 'evening', 20: 'night', 23: 'night', 24: 'night', [-1]: 'night',
+    0: 'night',
+    4: 'night',
+    5: 'morning',
+    10: 'morning',
+    11: 'afternoon',
+    15: 'afternoon',
+    16: 'evening',
+    19: 'evening',
+    20: 'night',
+    23: 'night',
+    24: 'night',
+    [-1]: 'night',
   };
   for (const [hour, phase] of Object.entries(expected)) assert.equal(phaseForHour(Number(hour)), phase, `hour ${hour}`);
   assert.equal(phaseForHour('x'), 'afternoon');
@@ -36,13 +44,23 @@ test('the light reads as its time of day', () => {
   assert.equal(gradeFor('morning', 'good').ink, INK_DARK);
   assert.equal(gradeFor('evening', 'good').ink, INK_LIGHT, 'dusk: light text');
   assert.equal(gradeFor('night', 'good').ink, INK_LIGHT);
-  assert.equal(gradeFor('night', 'hazardous').vars['--sky-1'], gradeFor('night', 'good').vars['--sky-1'], 'night sky stays obsidian');
-  assert.notEqual(gradeFor('night', 'hazardous').vars['--sky-3'], gradeFor('night', 'good').vars['--sky-3'], 'smog glows on the night horizon');
+  assert.equal(
+    gradeFor('night', 'hazardous').vars['--sky-1'],
+    gradeFor('night', 'good').vars['--sky-1'],
+    'night sky stays obsidian',
+  );
+  assert.notEqual(
+    gradeFor('night', 'hazardous').vars['--sky-3'],
+    gradeFor('night', 'good').vars['--sky-3'],
+    'smog glows on the night horizon',
+  );
 });
 
 test('thicker smog makes the same sky darker and murkier', () => {
   const luminanceOrder = AQI_BANDS.map((b) => contrastRatio(gradeFor('afternoon', b.key).vars['--sky-3'], '#000000'));
-  for (let i = 1; i < luminanceOrder.length; i += 1) assert.ok(luminanceOrder[i] <= luminanceOrder[i - 1], `band ${i} not darker`);
+  for (let i = 1; i < luminanceOrder.length; i += 1) {
+    assert.ok(luminanceOrder[i] <= luminanceOrder[i - 1], `band ${i} not darker`);
+  }
   assert.equal(gradeFor('afternoon', 'good').vars['--haze'].endsWith('/ 0%)'), true, 'no haze in clean air');
 });
 

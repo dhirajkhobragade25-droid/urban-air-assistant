@@ -58,7 +58,16 @@ test('biomass cooking is a top-priority switch', () => {
 });
 
 test('best-window advice uses forecast numbers when the gain is meaningful', () => {
-  const window = { start: '2026-11-24T14:00', worstStart: '2026-11-23T22:00', hours: 2, best: 60, worst: 240, reductionPct: 75, nextDay: true, worstNextDay: false };
+  const window = {
+    start: '2026-11-24T14:00',
+    worstStart: '2026-11-23T22:00',
+    hours: 2,
+    best: 60,
+    worst: 240,
+    reductionPct: 75,
+    nextDay: true,
+    worstNextDay: false,
+  };
   const rec = flattenPlan(planFor(200, {}, window)).find((r) => r.id === 'best-window');
   assert.equal(rec.params.range, '14:00–16:00');
   assert.equal(rec.params.pct, 75);
@@ -70,7 +79,13 @@ test('best-window advice uses forecast numbers when the gain is meaningful', () 
 
 test('every group is sorted by priority and capped', () => {
   const plan = planFor(420, {
-    children: true, elderly: true, respiratory: true, pregnant: true, commute: 'car', cooking: 'biomass', outdoorExercise: true,
+    children: true,
+    elderly: true,
+    respiratory: true,
+    pregnant: true,
+    commute: 'car',
+    cooking: 'biomass',
+    outdoorExercise: true,
   });
   for (const category of CATEGORIES) {
     const list = plan[category];
@@ -80,8 +95,12 @@ test('every group is sorted by priority and capped', () => {
 });
 
 test('rules only produce known advice ids', () => {
-  const profiles = [{}, { commute: 'car', cooking: 'biomass', outdoorExercise: true, purifier: true },
-    { commute: 'two_wheeler', children: true }, { commute: 'walk_cycle', respiratory: true, cooking: 'lpg' }];
+  const profiles = [
+    {},
+    { commute: 'car', cooking: 'biomass', outdoorExercise: true, purifier: true },
+    { commute: 'two_wheeler', children: true },
+    { commute: 'walk_cycle', respiratory: true, cooking: 'lpg' },
+  ];
   for (const aqi of [0, 40, 75, 125, 175, 250, 400]) {
     for (const profile of profiles) {
       for (const id of ids(planFor(aqi, profile))) assert.ok(ADVICE_IDS.includes(id), `unknown id ${id}`);

@@ -68,8 +68,12 @@ export function renderMascot(stage, { character, mood, quip, label }, { smooth =
   const poses = smooth && moodChanged ? capturePoses(stage) : [];
   stage.dataset.mood = mood;
   stage.dataset.character = buddy;
-  stage.querySelectorAll('[data-buddy]').forEach((node) => { node.hidden = node.dataset.buddy !== buddy; });
-  stage.querySelectorAll('[data-role="mascot-title"]').forEach((node) => { node.textContent = label; });
+  stage.querySelectorAll('[data-buddy]').forEach((node) => {
+    node.hidden = node.dataset.buddy !== buddy;
+  });
+  stage.querySelectorAll('[data-role="mascot-title"]').forEach((node) => {
+    node.textContent = label;
+  });
   glideFromPoses(poses);
   const bubble = stage.querySelector('[data-role="bubble"]');
   if (bubble && bubble.textContent !== quip) {

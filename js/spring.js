@@ -122,7 +122,7 @@ export const MAX_STRETCH = 0.22;
  * Boxes are {left, width} in the same coordinate space.
  */
 export function glideKeyframes(fromBox, toBox) {
-  const dx = (fromBox.left + fromBox.width / 2) - (toBox.left + toBox.width / 2);
+  const dx = fromBox.left + fromBox.width / 2 - (toBox.left + toBox.width / 2);
   const s0 = toBox.width > 0 ? fromBox.width / toBox.width : 1;
   const { values, duration } = sampleSpring(SPRINGS.glide, { from: 0, to: 1 });
   const travel = Math.abs(dx) || 1;

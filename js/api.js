@@ -22,48 +22,70 @@ export class ApiError extends Error {
 const isLatitude = (v) => Number.isFinite(v) && v >= -90 && v <= 90;
 const isLongitude = (v) => Number.isFinite(v) && v >= -180 && v <= 180;
 
+/** GETs JSON with a timeout, turning every failure into an ApiError. */
+async function getJson(fetchImpl, url) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  try {
+    const response = await fetchImpl(url, { signal: controller.signal, headers: { accept: 'application/json' } });
+    if (!response.ok) throw new ApiError('http', { status: response.status });
+    return await response.json();
+  } catch (error) {
+    if (error instanceof ApiError) throw error;
+    throw new ApiError(error?.name === 'AbortError' ? 'timeout' : 'network');
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/** A geocoding result as the app's place, with a readable label. */
+function toPlace(r) {
+  return {
+    id: r.id,
+    name: r.name,
+    latitude: r.latitude,
+    longitude: r.longitude,
+    label: [r.name, r.admin1, r.country].filter(Boolean).join(', '),
+  };
+}
+
+/** The air-quality request for a coordinate: current values plus 2 days of hourly PM2.5. */
+function airQualityUrl(latitude, longitude) {
+  const url = new URL(AIR_URL);
+  url.search = new URLSearchParams({
+    latitude: latitude.toFixed(4),
+    longitude: longitude.toFixed(4),
+    current: 'us_aqi,pm2_5,pm10,nitrogen_dioxide,ozone',
+    hourly: 'pm2_5,us_aqi',
+    timezone: 'auto',
+    forecast_days: '2',
+  });
+  return url.toString();
+}
+
 /**
  * Creates a client. Dependencies are injectable for testing.
  * @param {{fetchImpl?: Function, now?: () => number}} deps
  */
-export function createAirClient({
-  fetchImpl = (...args) => globalThis.fetch(...args),
-  now = () => Date.now(),
-} = {}) {
+export function createAirClient({ fetchImpl = (...args) => globalThis.fetch(...args), now = () => Date.now() } = {}) {
   const cache = new Map();
-
-  async function getJson(url) {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
-    try {
-      const response = await fetchImpl(url, { signal: controller.signal, headers: { accept: 'application/json' } });
-      if (!response.ok) throw new ApiError('http', { status: response.status });
-      return await response.json();
-    } catch (error) {
-      if (error instanceof ApiError) throw error;
-      throw new ApiError(error && error.name === 'AbortError' ? 'timeout' : 'network');
-    } finally {
-      clearTimeout(timer);
-    }
-  }
 
   /** Finds up to 5 places matching `name`. */
   async function searchPlaces(name, lang = 'en') {
     const query = String(name ?? '').trim();
     if (query.length < 2 || query.length > 80) throw new ApiError('badInput');
     const url = new URL(GEOCODE_URL);
-    url.search = new URLSearchParams({ name: query, count: '5', language: lang === 'hi' ? 'hi' : 'en', format: 'json' });
-    const json = await getJson(url.toString());
+    url.search = new URLSearchParams({
+      name: query,
+      count: '5',
+      language: lang === 'hi' ? 'hi' : 'en',
+      format: 'json',
+    });
+    const json = await getJson(fetchImpl, url.toString());
     const results = Array.isArray(json?.results) ? json.results : [];
     return results
       .filter((r) => isLatitude(r.latitude) && isLongitude(r.longitude) && typeof r.name === 'string')
-      .map((r) => ({
-        id: r.id,
-        name: r.name,
-        latitude: r.latitude,
-        longitude: r.longitude,
-        label: [r.name, r.admin1, r.country].filter(Boolean).join(', '),
-      }));
+      .map(toPlace);
   }
 
   /** Current air quality + 2-day hourly PM2.5 for a coordinate. */
@@ -73,18 +95,9 @@ export function createAirClient({
     const hit = cache.get(key);
     if (hit && now() - hit.at < CACHE_TTL_MS) return hit.data;
 
-    const url = new URL(AIR_URL);
-    url.search = new URLSearchParams({
-      latitude: latitude.toFixed(4),
-      longitude: longitude.toFixed(4),
-      current: 'us_aqi,pm2_5,pm10,nitrogen_dioxide,ozone',
-      hourly: 'pm2_5,us_aqi',
-      timezone: 'auto',
-      forecast_days: '2',
-    });
     let data;
     try {
-      data = parseAirQuality(await getJson(url.toString()));
+      data = parseAirQuality(await getJson(fetchImpl, airQualityUrl(latitude, longitude)));
     } catch (error) {
       if (error instanceof ApiError) throw error;
       throw new ApiError(error.code || 'noData');

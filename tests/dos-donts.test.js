@@ -36,10 +36,22 @@ test('profile changes the lists', () => {
 });
 
 test('cleanest hours appear only with a useful forecast window', () => {
-  const window = { start: '2026-11-24T14:00', worstStart: '2026-11-23T22:00', hours: 2, best: 60, worst: 240, reductionPct: 75, nextDay: true, worstNextDay: false };
+  const window = {
+    start: '2026-11-24T14:00',
+    worstStart: '2026-11-23T22:00',
+    hours: 2,
+    best: 60,
+    worst: 240,
+    reductionPct: 75,
+    nextDay: true,
+    worstNextDay: false,
+  };
   const item = dd(180, {}, window).dos.find((d) => d.id === 'best-hours');
   assert.deepEqual(item.params, { range: '14:00–16:00', nextDay: true });
-  assert.equal(createTranslator('en')('do.best-hours', item.params), 'Plan errands for 14:00–16:00 (tomorrow), the cleanest hours');
+  assert.equal(
+    createTranslator('en')('do.best-hours', item.params),
+    'Plan errands for 14:00–16:00 (tomorrow), the cleanest hours',
+  );
   assert.ok(!ids(dd(180, {}, { ...window, reductionPct: 3 }).dos).includes('best-hours'));
 });
 
@@ -60,18 +72,28 @@ test('chat answers "what should I avoid" with do and don\'t lists', () => {
 
   const ctx = buildContext({ aqi: 260, profile: { children: true } });
   const answer = localAnswer({
-    question: 'What should I avoid today?', plan: buildPlan(ctx), risk: ctx.risk, translate: createTranslator('en'), dosDonts: buildDosDonts(ctx),
+    question: 'What should I avoid today?',
+    plan: buildPlan(ctx),
+    risk: ctx.risk,
+    translate: createTranslator('en'),
+    dosDonts: buildDosDonts(ctx),
   });
   assert.match(answer, /Do:/);
   assert.match(answer, /❌ Don’t run, cycle hard or play sports outdoors/);
   assert.equal(answer.split('\n').filter((l) => l.startsWith('✅')).length, 3);
 });
 
-test('Gemini prompt includes the do and don\'t lists', () => {
+test("Gemini prompt includes the do and don't lists", () => {
   const ctx = buildContext({ aqi: 200, profile: {} });
   const prompt = buildUserPrompt({
-    question: 'hi', place: 'Delhi', snapshot: null, risk: ctx.risk, profile: ctx.profile,
-    plan: buildPlan(ctx), dosDonts: buildDosDonts(ctx), translate: createTranslator('en'),
+    question: 'hi',
+    place: 'Delhi',
+    snapshot: null,
+    risk: ctx.risk,
+    profile: ctx.profile,
+    plan: buildPlan(ctx),
+    dosDonts: buildDosDonts(ctx),
+    translate: createTranslator('en'),
   });
   assert.match(prompt, /"dosAndDonts":\{"do":\[/);
   assert.match(prompt, /Don’t keep windows open in smoggy hours/);

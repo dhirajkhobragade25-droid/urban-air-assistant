@@ -13,7 +13,8 @@ export function forecastSeries(hourly, fromTime) {
   if (!Array.isArray(hourly) || typeof fromTime !== 'string') return [];
   const start = hourly.findIndex((h) => h && typeof h.time === 'string' && h.time >= fromTime);
   if (start < 0) return [];
-  return hourly.slice(start, start + CHART_HOURS)
+  return hourly
+    .slice(start, start + CHART_HOURS)
     .map((h, offset) => ({ time: h.time, offset, pm25: h.pm25 }))
     .filter((p) => Number.isFinite(p.pm25) && p.pm25 >= 0);
 }
@@ -21,7 +22,9 @@ export function forecastSeries(hourly, fromTime) {
 /** A round upper bound for the y axis, never below `floor`. */
 export function niceMax(values, floor = 60) {
   const max = Math.max(floor, ...values);
-  const step = max > 200 ? 50 : max > 100 ? 25 : 10;
+  let step = 10;
+  if (max > 200) step = 50;
+  else if (max > 100) step = 25;
   return Math.ceil((max * 1.1) / step) * step;
 }
 
@@ -129,5 +132,7 @@ export function gaugeAngle(position, g = GAUGE) {
 /** How much of each band segment is lit (0–1) for a scale position. */
 export function gaugeFills(position, g = GAUGE) {
   const p = clampPct(position) / 100;
-  return Array.from({ length: g.segments }, (_, i) => round2(Math.min(Math.max((p - i / g.segments) * g.segments, 0), 1)));
+  return Array.from({ length: g.segments }, (_, i) =>
+    round2(Math.min(Math.max((p - i / g.segments) * g.segments, 0), 1)),
+  );
 }

@@ -21,9 +21,7 @@ export const RULES = Object.freeze([
   // ── Protect yourself ───────────────────────────────────────────────
   ({ aqi }) => (aqi > 300 ? item('emergency', 'health', 1) : null),
 
-  ({ aqi, risk }) => (aqi > 150 || risk.level >= 3
-    ? item('mask', 'health', risk.level >= 4 ? 1 : 2)
-    : null),
+  ({ aqi, risk }) => (aqi > 150 || risk.level >= 3 ? item('mask', 'health', risk.level >= 4 ? 1 : 2) : null),
 
   ({ risk }) => (risk.sensitive && risk.level >= 2 ? item('sensitive', 'health', 1) : null),
 
@@ -84,7 +82,8 @@ export const RULES = Object.freeze([
 
   ({ aqi, profile }) => (!profile.purifier && aqi > 150 ? item('diy-purifier', 'indoor', 2) : null),
 
-  ({ profile }) => (profile.cooking !== 'induction' ? item('cooking-vent', 'indoor', profile.cooking === 'biomass' ? 1 : 3) : null),
+  ({ profile }) =>
+    profile.cooking !== 'induction' ? item('cooking-vent', 'indoor', profile.cooking === 'biomass' ? 1 : 3) : null,
 
   ({ aqi }) => (aqi > 100 ? item('smoke-sources', 'indoor', 2) : null),
 
@@ -136,16 +135,38 @@ export function buildPlan(context) {
 
 /** Flattens a plan into one list ordered by priority. */
 export function flattenPlan(plan) {
-  return CATEGORIES.flatMap((c) => plan[c] || [])
-    .sort((a, b) => a.priority - b.priority || a.order - b.order);
+  return CATEGORIES.flatMap((c) => plan[c] || []).sort((a, b) => a.priority - b.priority || a.order - b.order);
 }
 
 /** All advice ids that can be produced (used to check translations). */
 export const ADVICE_IDS = Object.freeze([
-  'emergency', 'mask', 'sensitive', 'meds', 'children', 'exercise-indoor', 'exercise-shift',
-  'outdoor-go', 'best-window', 'commute-today', 'rider', 'walker', 'wfh', 'no-burning', 'idling',
-  'windows', 'ventilate', 'purifier', 'diy-purifier', 'cooking-vent', 'smoke-sources', 'dust',
-  'clean-fuel', 'transit-default', 'warmth', 'induction', 'community',
+  'emergency',
+  'mask',
+  'sensitive',
+  'meds',
+  'children',
+  'exercise-indoor',
+  'exercise-shift',
+  'outdoor-go',
+  'best-window',
+  'commute-today',
+  'rider',
+  'walker',
+  'wfh',
+  'no-burning',
+  'idling',
+  'windows',
+  'ventilate',
+  'purifier',
+  'diy-purifier',
+  'cooking-vent',
+  'smoke-sources',
+  'dust',
+  'clean-fuel',
+  'transit-default',
+  'warmth',
+  'induction',
+  'community',
 ]);
 
 /* ── Quick do's and don'ts ──────────────────────────────────────────
@@ -200,10 +221,11 @@ export const DONT_RULES = Object.freeze([
 export const DO_IDS = Object.freeze(DO_RULES.map((r) => r.id));
 export const DONT_IDS = Object.freeze(DONT_RULES.map((r) => r.id));
 
-const pick = (rules, ctx) => rules
-  .filter((rule) => rule.when(ctx))
-  .slice(0, MAX_DD)
-  .map((rule) => ({ id: rule.id, params: rule.params ? rule.params(ctx) : {} }));
+const pick = (rules, ctx) =>
+  rules
+    .filter((rule) => rule.when(ctx))
+    .slice(0, MAX_DD)
+    .map((rule) => ({ id: rule.id, params: rule.params ? rule.params(ctx) : {} }));
 
 /** @returns {{dos: Array<{id:string, params:object}>, donts: Array<{id:string, params:object}>}} */
 export function buildDosDonts(context) {

@@ -56,13 +56,15 @@ const isHour = (h) => Number.isInteger(h) && h >= 0 && h <= 23;
  */
 export function normalizeRoutine(input) {
   const source = input && typeof input === 'object' ? input : {};
-  return Object.fromEntries(ACTIVITIES.map((a) => {
-    if (!Object.hasOwn(source, a.id)) return [a.id, a.defaultHour];
-    const value = source[a.id];
-    if (value === null) return [a.id, null];
-    const hour = Number(value);
-    return [a.id, isHour(hour) ? hour : a.defaultHour];
-  }));
+  return Object.fromEntries(
+    ACTIVITIES.map((a) => {
+      if (!Object.hasOwn(source, a.id)) return [a.id, a.defaultHour];
+      const value = source[a.id];
+      if (value === null) return [a.id, null];
+      const hour = Number(value);
+      return [a.id, isHour(hour) ? hour : a.defaultHour];
+    }),
+  );
 }
 
 /** Advice for one activity when only the overall AQI is known (no forecast). */
@@ -76,8 +78,17 @@ function assessWithoutForecast(activity, hour, aqi) {
     note = activity.effort === 'active' ? 'easy' : 'mask';
   }
   return {
-    id: activity.id, effort: activity.effort, hour, status, note, live: false,
-    pm25: null, bestHour: null, bestPm25: null, reductionPct: 0, nextDay: false,
+    id: activity.id,
+    effort: activity.effort,
+    hour,
+    status,
+    note,
+    live: false,
+    pm25: null,
+    bestHour: null,
+    bestPm25: null,
+    reductionPct: 0,
+    nextDay: false,
   };
 }
 
@@ -94,24 +105,34 @@ function upcomingHours(hourly, fromTime) {
  * next occurrence (later today, or tomorrow if it has passed); the best time
  * is the cleanest hour in the next 24 h that still fits the activity.
  */
-function assessWithForecast(activity, hour, upcoming, today) {
-  const slot = upcoming.find((h) => hourOf(h.time) === hour);
-  if (!slot) return null;
+/** The cleanest forecast hour that still fits the activity's window (the usual slot if none is cleaner). */
+function cleanestHour(activity, slot, upcoming) {
   const [lo, hi] = activity.window;
   let best = slot;
   for (const h of upcoming) {
     const hh = hourOf(h.time);
     if (hh >= lo && hh <= hi && h.pm25 < best.pm25) best = h;
   }
-  const reductionPct = slot.pm25 > 0 ? Math.round(((slot.pm25 - best.pm25) / slot.pm25) * 100) : 0;
+  return best;
+}
 
+/** keep, move or indoors, and an optional note (mask / take it easy). */
+function verdict(activity, slot, best, reductionPct) {
   let status = 'keep';
   if (activity.effort === 'active' && best.pm25 >= PM25_UNHEALTHY) status = 'indoors';
   else if (best !== slot && reductionPct >= MIN_GAIN_PCT) status = 'move';
-
   const goingAt = status === 'move' ? best.pm25 : slot.pm25;
   let note = null;
   if (status !== 'indoors' && goingAt >= PM25_SENSITIVE) note = activity.effort === 'active' ? 'easy' : 'mask';
+  return { status, note };
+}
+
+function assessWithForecast(activity, hour, upcoming, today) {
+  const slot = upcoming.find((h) => hourOf(h.time) === hour);
+  if (!slot) return null;
+  const best = cleanestHour(activity, slot, upcoming);
+  const reductionPct = slot.pm25 > 0 ? Math.round(((slot.pm25 - best.pm25) / slot.pm25) * 100) : 0;
+  const { status, note } = verdict(activity, slot, best, reductionPct);
 
   return {
     id: activity.id,

@@ -1,14 +1,34 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  categorize, bandIndex, assessRisk, normalizeProfile, weeklyCo2SavedKg,
-  findBestWindow, parseAirQuality, whoMultiple, formatRange, DEFAULT_PROFILE,
+  categorize,
+  bandIndex,
+  assessRisk,
+  normalizeProfile,
+  weeklyCo2SavedKg,
+  findBestWindow,
+  parseAirQuality,
+  whoMultiple,
+  formatRange,
+  DEFAULT_PROFILE,
 } from '../js/engine.js';
 
 test('categorize uses inclusive US AQI band edges', () => {
-  const cases = [[0, 'good'], [50, 'good'], [51, 'moderate'], [100, 'moderate'], [101, 'sensitive'],
-    [150, 'sensitive'], [151, 'unhealthy'], [200, 'unhealthy'], [201, 'very-unhealthy'],
-    [300, 'very-unhealthy'], [301, 'hazardous'], [500, 'hazardous'], [999, 'hazardous']];
+  const cases = [
+    [0, 'good'],
+    [50, 'good'],
+    [51, 'moderate'],
+    [100, 'moderate'],
+    [101, 'sensitive'],
+    [150, 'sensitive'],
+    [151, 'unhealthy'],
+    [200, 'unhealthy'],
+    [201, 'very-unhealthy'],
+    [300, 'very-unhealthy'],
+    [301, 'hazardous'],
+    [500, 'hazardous'],
+    [999, 'hazardous'],
+  ];
   for (const [aqi, key] of cases) assert.equal(categorize(aqi).key, key, `AQI ${aqi}`);
 });
 
@@ -19,7 +39,14 @@ test('bandIndex rejects invalid AQI values', () => {
 });
 
 test('normalizeProfile drops unknown keys and fixes bad values', () => {
-  const p = normalizeProfile({ children: 'yes', commute: 'rocket', commuteKm: -5, cooking: 'biomass', __proto__x: 1, evil: true });
+  const p = normalizeProfile({
+    children: 'yes',
+    commute: 'rocket',
+    commuteKm: -5,
+    cooking: 'biomass',
+    __proto__x: 1,
+    evil: true,
+  });
   assert.deepEqual(Object.keys(p).sort(), Object.keys(DEFAULT_PROFILE).sort());
   assert.equal(p.children, false, 'only real booleans count');
   assert.equal(p.commute, 'public');
@@ -69,11 +96,12 @@ test('formatRange wraps around midnight', () => {
   assert.equal(formatRange('bad', 2), '');
 });
 
-const hourly = (values, start = 20) => values.map((pm25, i) => {
-  const h = start + i;
-  const day = h >= 24 ? 24 : 23;
-  return { time: `2026-11-${day}T${String(h % 24).padStart(2, '0')}:00`, pm25, aqi: null };
-});
+const hourly = (values, start = 20) =>
+  values.map((pm25, i) => {
+    const h = start + i;
+    const day = h >= 24 ? 24 : 23;
+    return { time: `2026-11-${day}T${String(h % 24).padStart(2, '0')}:00`, pm25, aqi: null };
+  });
 
 test('findBestWindow finds the cleanest and dirtiest windows', () => {
   const data = hourly([200, 180, 90, 60, 70, 250, 300]);
@@ -110,8 +138,14 @@ test('parseAirQuality reshapes a valid Open-Meteo response', () => {
 });
 
 test('parseAirQuality rejects missing data', () => {
-  assert.throws(() => parseAirQuality({}), (e) => e.code === 'noData');
-  assert.throws(() => parseAirQuality({ current: { time: 'x', us_aqi: null } }), (e) => e.code === 'noData');
+  assert.throws(
+    () => parseAirQuality({}),
+    (e) => e.code === 'noData',
+  );
+  assert.throws(
+    () => parseAirQuality({ current: { time: 'x', us_aqi: null } }),
+    (e) => e.code === 'noData',
+  );
   assert.equal(parseAirQuality({ current: { time: 't', us_aqi: 10 } }).hourly.length, 0);
 });
 

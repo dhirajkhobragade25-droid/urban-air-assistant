@@ -1,13 +1,32 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import {
-  SPRINGS, FRAME, JELLY_LAG, MAX_STRETCH, dampingRatio, springAt, sampleSpring,
-  pressDepth, pressKeyframes, releaseKeyframes, glideKeyframes,
+  SPRINGS,
+  FRAME,
+  JELLY_LAG,
+  MAX_STRETCH,
+  dampingRatio,
+  springAt,
+  sampleSpring,
+  pressDepth,
+  pressKeyframes,
+  releaseKeyframes,
+  glideKeyframes,
 } from '../js/spring.js';
 import {
-  TEXT, BARE_TEXT, GLASS_TEXT, TAB_TEXT, CONTROL_FILL, composite, worstText,
-  SKY, skyFor, heroGlassFor, GLASS_FROST, pickAlpha,
+  TEXT,
+  BARE_TEXT,
+  GLASS_TEXT,
+  TAB_TEXT,
+  CONTROL_FILL,
+  composite,
+  worstText,
+  SKY,
+  skyFor,
+  heroGlassFor,
+  GLASS_FROST,
+  pickAlpha,
 } from '../js/glass.js';
 import { existsSync, statSync } from 'node:fs';
 import { PHASES, gradeFor, contrastRatio, MIN_CONTRAST } from '../js/grade.js';
@@ -18,7 +37,11 @@ const round = (n) => Math.round(n * 100) / 100;
 
 const css = readFileSync(new URL('../css/styles.css', import.meta.url), 'utf8');
 const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
-const scaleOf = (transform) => transform.match(/scale\(([\d.]+), ([\d.]+)\)/).slice(1).map(Number);
+const scaleOf = (transform) =>
+  transform
+    .match(/scale\(([\d.]+), ([\d.]+)\)/)
+    .slice(1)
+    .map(Number);
 const BANDS = AQI_BANDS.map((b) => b.key);
 
 /* ---------- Spring physics ---------- */
@@ -36,7 +59,8 @@ test('springAt starts at x0 and decays to rest in every damping regime', () => {
     assert.ok(Math.abs(springAt(3, spring, 1, 0)) < 0.01, `damping ${damping} should come to rest`);
   }
   // Under-damped crosses zero; critically and over-damped never do.
-  const crosses = (spring) => Array.from({ length: 120 }, (_, i) => springAt(i * FRAME, spring, 1, 0)).some((x) => x < -1e-6);
+  const crosses = (spring) =>
+    Array.from({ length: 120 }, (_, i) => springAt(i * FRAME, spring, 1, 0)).some((x) => x < -1e-6);
   assert.equal(crosses({ stiffness: 300, damping: 8 }), true);
   assert.equal(crosses({ stiffness: 300, damping: 2 * Math.sqrt(300) }), false);
   assert.equal(crosses({ stiffness: 300, damping: 60 }), false);
@@ -78,7 +102,10 @@ test('release keyframes spring back past full size with a jelly lag', () => {
   assert.deepEqual([xs.at(-1), ys.at(-1)], [1, 1]);
   assert.ok(Math.max(...xs) > 1.01, 'overshoots: the bounce');
   const lag = Math.round(JELLY_LAG / FRAME);
-  assert.ok(ys.slice(0, lag).every((y) => y === 0.92), 'y waits while x starts');
+  assert.ok(
+    ys.slice(0, lag).every((y) => y === 0.92),
+    'y waits while x starts',
+  );
   assert.ok(xs[lag] > ys[lag], 'x leads y: the wobble');
   assert.ok(duration > 400 && duration < 1200, `duration ${duration}`);
   // Nonsense input is clamped, never NaN.
@@ -155,9 +182,18 @@ test('each time of day has its own colour, deepening down the page', () => {
 });
 
 test('the card tint is the lightest that passes, and solid when none does', () => {
-  assert.equal(pickAlpha(() => true), 0.3);
-  assert.equal(pickAlpha((a) => a >= 0.62), 0.65);
-  assert.equal(pickAlpha(() => false), 1);
+  assert.equal(
+    pickAlpha(() => true),
+    0.3,
+  );
+  assert.equal(
+    pickAlpha((a) => a >= 0.62),
+    0.65,
+  );
+  assert.equal(
+    pickAlpha(() => false),
+    1,
+  );
 });
 
 test('the AQI changes only the scene: the page, the cards and the frost stay put', () => {
@@ -169,13 +205,22 @@ test('the AQI changes only the scene: the page, the cards and the frost stay put
   const clean = gradeFor('afternoon', 'good').vars['--sky-1'];
   const smog = gradeFor('afternoon', 'hazardous').vars['--sky-1'];
   assert.notEqual(clean, smog, 'the scene turns smoggy');
-  // The frost is a constant in CSS and nothing in app.js sets it per reading.
-  const app = readFileSync(new URL('../js/app.js', import.meta.url), 'utf8');
-  assert.doesNotMatch(app, /--frost/);
-  assert.doesNotMatch(app, /skyFor\([^)]*,/);
+  // The frost is a constant in CSS and no UI module sets it per reading.
+  const uiDir = new URL('../js/ui/', import.meta.url);
+  const ui = [new URL('../js/app.js', import.meta.url), ...readdirSync(uiDir).map((name) => new URL(name, uiDir))]
+    .map((file) => readFileSync(file, 'utf8'))
+    .join('\n');
+  assert.match(ui, /skyFor\(grade\.phase\)/, 'the page sky follows the time of day');
+  assert.doesNotMatch(ui, /--frost/);
+  assert.doesNotMatch(ui, /skyFor\([^)]*,/);
   assert.match(css, new RegExp(`@property --frost \\{[^}]*initial-value: ${GLASS_FROST.amount};`));
   const [r, g, b] = [1, 3, 5].map((i) => Number.parseInt(GLASS_FROST.colour.slice(i, i + 2), 16));
-  assert.match(css, new RegExp(`@property --frost-tint \\{[^}]*initial-value: rgb\\(${r} ${g} ${b} / ${Math.round(GLASS_FROST.alpha * 100)}%\\);`));
+  assert.match(
+    css,
+    new RegExp(
+      `@property --frost-tint \\{[^}]*initial-value: rgb\\(${r} ${g} ${b} / ${Math.round(GLASS_FROST.alpha * 100)}%\\);`,
+    ),
+  );
 });
 
 test('the glass speech bubble keeps the hero ink readable in every grade', () => {
@@ -216,12 +261,21 @@ test('styles.css mirrors the colours and glass tints the checks use', () => {
 
 test('every tab points at a live-screen section with a focusable heading, plus a Settings tab', () => {
   const tabs = [...html.matchAll(/class="tab" href="#([\w-]+)" data-section="([\w-]+)"/g)];
-  assert.deepEqual(tabs.map((t) => t[2]), ['sec-air', 'sec-plan', 'sec-ask']);
+  assert.deepEqual(
+    tabs.map((t) => t[2]),
+    ['sec-air', 'sec-plan', 'sec-ask'],
+  );
   for (const [, href, section] of tabs) {
     assert.equal(href, section);
-    assert.match(html, new RegExp(`<section class="panel[^"]*" id="${section}"[^>]*>\\s*<h2 id="[\\w-]+"[^>]*tabindex="-1"`));
+    assert.match(
+      html,
+      new RegExp(`<section class="panel[^"]*" id="${section}"[^>]*>\\s*<h2 id="[\\w-]+"[^>]*tabindex="-1"`),
+    );
   }
-  assert.match(html, /<button id="tab-settings" type="button" class="tab" aria-haspopup="dialog" aria-controls="settings">/);
+  assert.match(
+    html,
+    /<button id="tab-settings" type="button" class="tab" aria-haspopup="dialog" aria-controls="settings">/,
+  );
   assert.match(html, /<dialog id="settings" class="sheet" aria-labelledby="settings-title">/);
 });
 
@@ -256,9 +310,15 @@ test('Poppins is self-hosted, licensed, and allowed by the content security poli
 });
 
 test('the big glass sheets are cut like ice; controls stay softly rounded', () => {
-  assert.match(css, /:is\(\.panel, \.sheet, \.stage\) \{ border-top-right-radius: var\(--cut\); corner-top-right-shape: bevel; \}/);
+  assert.match(
+    css,
+    /:is\(\.panel, \.sheet, \.stage\) \{ border-top-right-radius: var\(--cut\); corner-top-right-shape: bevel; \}/,
+  );
   assert.match(css, /@supports not \(corner-shape: bevel\)/);
-  assert.match(css, /\.btn, \.chip, \.lang-switch, \.lang-btn, \.phase-options, \.phase-option, \.lens, \.tabbar, \.tab,\n\.search-field input, \.status, \.setup-preview, \.setup-actions, \.demo-badge \{ border-radius: 999px; \}/);
+  assert.match(
+    css,
+    /\.btn, \.chip, \.lang-switch, \.lang-btn, \.phase-options, \.phase-option, \.lens, \.tabbar, \.tab,\n\.search-field input, \.status, \.setup-preview, \.setup-actions, \.demo-badge \{ border-radius: 999px; \}/,
+  );
 });
 
 /* ---------- AQI ring gauge ---------- */

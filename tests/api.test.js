@@ -47,12 +47,19 @@ test('fetchAirQuality validates coordinates and surfaces errors', async () => {
   assert.equal(calls.length, 0);
 
   const failing = createAirClient(recorder({}, 503));
-  await assert.rejects(failing.fetchAirQuality({ latitude: 1, longitude: 1 }), (e) => e.code === 'http' && e.params.status === 503);
+  await assert.rejects(
+    failing.fetchAirQuality({ latitude: 1, longitude: 1 }),
+    (e) => e.code === 'http' && e.params.status === 503,
+  );
 
   const empty = createAirClient(recorder({ current: {} }));
   await assert.rejects(empty.fetchAirQuality({ latitude: 1, longitude: 1 }), (e) => e.code === 'noData');
 
-  const offline = createAirClient({ fetchImpl: async () => { throw new TypeError('offline'); } });
+  const offline = createAirClient({
+    fetchImpl: async () => {
+      throw new TypeError('offline');
+    },
+  });
   await assert.rejects(offline.fetchAirQuality({ latitude: 1, longitude: 1 }), (e) => e.code === 'network');
 });
 

@@ -8,7 +8,10 @@
     "start": "python3 -m http.server 8080",
     "test": "node --test",
     "coverage": "node --test --experimental-test-coverage",
-    "check": "for f in js/*.js tests/*.js; do node --check \"$f\" || exit 1; done"
+    "check": "for f in js/*.js js/*/*.js tests/*.js; do node --check \"$f\" || exit 1; done",
+    "lint": "npx --yes eslint@10.1.0 .",
+    "format": "npx --yes prettier@3.8.1 --write \"js/**/*.js\" \"tests/**/*.js\" eslint.config.js",
+    "format:check": "npx --yes prettier@3.8.1 --check \"js/**/*.js\" \"tests/**/*.js\" eslint.config.js"
   },
   "engines": {
     "node": ">=20"

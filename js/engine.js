@@ -214,13 +214,14 @@ export function parseAirQuality(json) {
     error.code = 'noData';
     throw error;
   }
-  const hourly = json.hourly && Array.isArray(json.hourly.time)
-    ? json.hourly.time.map((time, i) => ({
-      time,
-      pm25: numOrNull(json.hourly.pm2_5 && json.hourly.pm2_5[i]),
-      aqi: numOrNull(json.hourly.us_aqi && json.hourly.us_aqi[i]),
-    }))
-    : [];
+  const hourly =
+    json.hourly && Array.isArray(json.hourly.time)
+      ? json.hourly.time.map((time, i) => ({
+          time,
+          pm25: numOrNull(json.hourly.pm2_5 && json.hourly.pm2_5[i]),
+          aqi: numOrNull(json.hourly.us_aqi && json.hourly.us_aqi[i]),
+        }))
+      : [];
   return {
     time: current.time,
     aqi: Math.min(Math.max(Math.round(current.us_aqi), 0), MAX_AQI),
@@ -269,7 +270,10 @@ export function headlineFor({ band, snapshot, window }) {
     return { nowKey, next: { key: 'head.next.cleaner', hour: hourOfIso(window.start), nextDay: window.nextDay } };
   }
   if (worseSoon) {
-    return { nowKey, next: { key: 'head.next.worse', hour: hourOfIso(window.worstStart), nextDay: window.worstNextDay } };
+    return {
+      nowKey,
+      next: { key: 'head.next.worse', hour: hourOfIso(window.worstStart), nextDay: window.worstNextDay },
+    };
   }
   return { nowKey, next: { key: 'head.next.steady' } };
 }

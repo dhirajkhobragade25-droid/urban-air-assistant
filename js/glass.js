@@ -86,17 +86,26 @@ export function skyFor(phase) {
   const deep = mix(stops[2], '#000000', DEEPEN);
   // Worst case for white text: the frost film in pure white.
   const film = GLASS_FROST.alpha;
-  const readsOn = (surface) => worstText(surface, GLASS_TEXT) >= MIN_CONTRAST + 0.1
-    && contrastRatio(TEXT.ink, composite('#ffffff', CONTROL_FILL, surface)) >= MIN_CONTRAST + 0.1;
-  const card = pickAlpha((alpha) => stops.every((stop) => {
-    const glass = composite(deep, alpha, stop);
-    return readsOn(glass) && readsOn(composite('#ffffff', film, glass));
-  }));
+  const readsOn = (surface) =>
+    worstText(surface, GLASS_TEXT) >= MIN_CONTRAST + 0.1 &&
+    contrastRatio(TEXT.ink, composite('#ffffff', CONTROL_FILL, surface)) >= MIN_CONTRAST + 0.1;
+  const card = pickAlpha((alpha) =>
+    stops.every((stop) => {
+      const glass = composite(deep, alpha, stop);
+      return readsOn(glass) && readsOn(composite('#ffffff', film, glass));
+    }),
+  );
   // The tab bar floats over anything, even the brightest sky in the scene.
-  const tab = pickAlpha((alpha) => ['#ffffff', '#000000', ...stops]
-    .every((under) => worstText(composite(deep, alpha, under), TAB_TEXT) >= MIN_CONTRAST + 0.1));
+  const tab = pickAlpha((alpha) =>
+    ['#ffffff', '#000000', ...stops].every(
+      (under) => worstText(composite(deep, alpha, under), TAB_TEXT) >= MIN_CONTRAST + 0.1,
+    ),
+  );
   return {
-    stops, deep, card, tab,
+    stops,
+    deep,
+    card,
+    tab,
     vars: {
       '--page-1': stops[0],
       '--page-2': stops[1],
