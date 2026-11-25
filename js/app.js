@@ -7,6 +7,7 @@ import { DEFAULT_PROFILE, normalizeProfile, findBestWindow } from './engine.js';
 import { CATEGORIES, buildContext, buildPlan, buildDosDonts } from './advice.js';
 import { ACTIVITY_IDS, ROUTINE_HOURS, normalizeRoutine, planRoutine, summarizeImpact, formatHour } from './routine.js';
 import { createTranslator, resolveLang } from './i18n.js';
+import { PHASES, phaseForHour, gradeFor } from './grade.js';
 import { createAirClient } from './api.js';
 import { moodForLevel, quipKey, renderMascot, resolveCharacter, DEFAULT_CHARACTER } from './mascot.js';
 import {
@@ -35,6 +36,7 @@ const els = {
   heroCopy: $('#hero-copy'),
   motionBtn: $('#motion-btn'),
   buddyPicker: $('.buddy-picker'),
+  phasePicker: $('.phase-picker'),
   readout: $('#readout'),
   simRange: $('#sim-range'),
   simOutput: $('#sim-output'),
@@ -68,6 +70,7 @@ const state = {
   view: null,
   mood: null,
   character: DEFAULT_CHARACTER,
+  phase: 'auto', // 'auto' follows the local time; otherwise a preview of one time of day
   quipSeed: 0,
   requestId: 0,
   paused: false,
@@ -159,12 +162,25 @@ function localHour(view) {
   return view && view.snapshot ? Number.parseInt(view.snapshot.time.slice(11, 13), 10) : new Date().getHours();
 }
 
-/** The hero copy plus the scene's colour grade: band of the air, day or night. */
+/**
+ * The hero copy plus the scene's colour grade: the time of day sets the
+ * light, the outdoor AQI band lays the smog over it (see grade.js).
+ */
 function renderHero(view) {
-  els.heroCopy.replaceChildren(...heroNodes(view, T, state.lang));
-  const hour = localHour(view);
-  els.stage.dataset.band = view ? view.risk.band.key : 'good';
-  els.stage.dataset.night = String(hour >= 19 || hour < 6);
+  const phase = state.phase === 'auto' ? phaseForHour(localHour(view)) : state.phase;
+  const band = view ? view.risk.band.key : 'good';
+  const grade = gradeFor(phase, band);
+  for (const [name, value] of Object.entries(grade.vars)) els.stage.style.setProperty(name, value);
+  els.stage.dataset.band = band;
+  els.stage.dataset.phase = grade.phase;
+  els.stage.dataset.night = String(grade.phase === 'night');
+  els.heroCopy.replaceChildren(...heroNodes(view, T, state.lang, grade.phase));
+}
+
+function onPhaseChange(event) {
+  if (event.target.name !== 'phase') return;
+  state.phase = PHASES.includes(event.target.value) ? event.target.value : 'auto';
+  renderHero(state.view);
 }
 
 /** Coalesces rapid slider and form input into one render per animation frame. */
@@ -565,6 +581,7 @@ function bindEvents() {
   els.profileForm.addEventListener('change', onProfileChange);
   els.profileForm.addEventListener('submit', (event) => event.preventDefault());
   els.buddyPicker.addEventListener('change', onBuddyChange);
+  els.phasePicker.addEventListener('change', onPhaseChange);
   els.plan.addEventListener('click', onPlanSummaryClick);
   els.motionBtn.addEventListener('click', () => {
     state.paused = !state.paused;

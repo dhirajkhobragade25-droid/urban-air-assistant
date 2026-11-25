@@ -31,7 +31,7 @@ A GenAI-powered assistant that helps families and communities get through **seve
 ## Design: Swiss editorial, atmospheric colour
 
 - **Editorial type, not widgets.** An oversized AQI numeral, a one-line forecast in serif ("Dangerous smog now. *Cleaner air around 3 PM.*"), monospaced labels and hairline rules instead of card boxes.
-- **The scene is colour-graded, not decorated.** The hero canvas shifts like a film grade with the air: crisp morning blue-gold in clean air, golden-hour amber in haze, dusty slate in smog, smouldering obsidian at hazardous levels and OLED black at night, with subtle film grain. Text contrast stays at WCAG AA or better in every grade (lowest 6.1 : 1).
+- **The scene is colour-graded, not decorated.** Two things set the grade, like a film colourist would: the **time of day** sets the light (pale peach sunrise from the east in the morning, clear blue overhead in the afternoon, mauve dusk with an amber horizon from the west in the evening, OLED obsidian with the city's glow at night) and the **AQI band** lays a smog film over it (clean → haze → dusty slate → smouldering brown), with subtle film grain. The headline follows the clock too ("Thick smog *this evening*", "Clear air *tonight*"). `grade.js` picks the text colour and nudges the sky until the copy passes WCAG AA; all 24 time × band combinations are tested (lowest 4.8 : 1). A *Time of day* control previews any light; *Auto* uses the city's local time.
 - **One curve instead of many boxes.** A smooth 24-hour PM2.5 curve (monotone interpolation, so no invented peaks) shows reference lines, the cleanest window and a scrubber that works with touch, mouse and arrow keys.
 - **Motion-designed buddy.** Mood changes are choreographed: parts cross-fade and slide (the N95 rises into place, the gas mask drops in), the bicycle glides in, and the body glides from its current pose to rest before the next loop starts, so there is never a jump (measured: under 4 px per frame).
 
@@ -65,6 +65,7 @@ All decisions are made by small, pure, unit-tested functions. The AI explains an
             │      │                                                                  │
             │      ├─ js/engine.js    AQI bands, risk, windows, headline, CO₂ maths   │
             │      ├─ js/chart.js     smooth 24 h curve geometry                       │
+            │      ├─ js/grade.js     time-of-day × smog colour grade, AA-checked     │
             │      ├─ js/routine.js   daily-routine re-planner + impact summary       │
             │      ├─ js/advice.js    26 advice rules + do/don't lists                │
             │      ├─ js/assistant.js grounded prompts ──► Google Gemini (optional)   │
@@ -128,7 +129,7 @@ When should we go out today?
 git clone https://github.com/dhirajkhobragade25-droid/urban-air-assistant.git
 cd urban-air-assistant
 npm start            # serves the folder at http://localhost:8080 (python3 -m http.server)
-npm test             # 75 unit tests with node:test, no install needed
+npm test             # 80 unit tests with node:test, no install needed
 npm run coverage     # same tests with a coverage report
 npm run check        # syntax check of every module
 ```
@@ -154,8 +155,8 @@ Any static file server works (ES modules need `http://`, not `file://`).
 |---|---|
 | **Code quality** | Small single-purpose ES modules; all decisions in pure functions; views separated from the controller; JSDoc on public functions; no dependencies. |
 | **Security** | Strict Content-Security-Policy (self-hosted scripts/styles, network limited to Open-Meteo and Gemini, `base-uri`/`form-action` locked); no `innerHTML`; whitelist validation of profile, routine, coordinates, API key and model name; questions sanitised and capped at 300 characters; prompt-injection guard; the user's Gemini key stays in memory (or `sessionStorage` if they opt in) and is sent only to Google in the `x-goog-api-key` header, never in a URL; `no-referrer` policy. |
-| **Efficiency** | ~230 KB static site (~64 KB gzipped); one geocode + one air request per search; 10-minute cache; request timeouts; stale responses ignored; slider and form input coalesced to one render per animation frame; animation uses only `transform`, `opacity` and registered colour properties; the buddy's mood hand-over uses the Web Animations API. |
-| **Testing** | 75 `node:test` unit tests, 100 % line coverage of the logic modules: AQI edges, risk, forecast windows, routine re-planning (move / keep / indoors / passed hours / no forecast), editorial headline, curve geometry, every advice rule path, CO₂ maths, prompt grounding and injection handling, Gemini error mapping, API caching and validation, storage failures, buddy rendering, and EN/HI translation parity. CI runs them on every push. |
+| **Efficiency** | ~240 KB static site (~66 KB gzipped); one geocode + one air request per search; 10-minute cache; request timeouts; stale responses ignored; slider and form input coalesced to one render per animation frame; animation uses only `transform`, `opacity` and registered colour properties; the buddy's mood hand-over uses the Web Animations API. |
+| **Testing** | 80 `node:test` unit tests, 100 % line coverage of the logic modules: AQI edges, risk, forecast windows, routine re-planning (move / keep / indoors / passed hours / no forecast), editorial headline, curve geometry, colour grade contrast for every time of day and AQI band, every advice rule path, CO₂ maths, prompt grounding and injection handling, Gemini error mapping, API caching and validation, storage failures, buddy rendering, and EN/HI translation parity. CI runs them on every push. |
 | **Accessibility** | Semantic landmarks and headings, labelled controls (including each time picker), skip link, visible focus, 44 px targets, status updates via `role="status"`, AQI never shown by colour alone, keyboard-operable buddy picker and collapsible groups, `prefers-reduced-motion` respected plus a Pause button (WCAG 2.2.2), full Hindi UI with correct `lang`. |
 | **Problem alignment** | Built around a family's daily routine and winter smog: low-emission routines, indoor air hacks, sustainable switches, location-specific live data and forecast, and the direct impact of every choice. |
 

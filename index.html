@@ -59,7 +59,7 @@
     <!-- 2. Air + mascot -->
     <section class="panel air" aria-labelledby="air-heading">
       <h2 id="air-heading" data-i18n="air.heading">Your air right now</h2>
-      <figure id="stage" class="stage" data-mood="happy" data-character="twins" data-band="good" data-night="false">
+      <figure id="stage" class="stage" data-mood="happy" data-character="twins" data-band="good" data-phase="afternoon" data-night="false">
           <div class="sky" aria-hidden="true">
             <div class="bloom"></div>
             <svg class="skyline skyline-far" viewBox="0 0 400 80" preserveAspectRatio="none" focusable="false"><path d="M0 80V44h18V30h20v20h16V18h22v26h18V34h24V20h16v22h20V12h18v26h22V28h20v18h16V22h24v24h18V30h20v14h22V24h18v20h24V36h20v44z"/></svg>
@@ -127,6 +127,16 @@
           <p id="sim-hint" class="hint" data-i18n="sim.hint">Drag to see how your plan and your buddy react.</p>
           <button id="sim-reset" type="button" class="btn btn-ghost" data-i18n="sim.reset" hidden>Back to live data</button>
         </div>
+        <fieldset class="phase-picker">
+          <legend data-i18n="phase.legend">Time of day</legend>
+          <div class="phase-options">
+            <label class="phase-option"><input type="radio" name="phase" value="auto" checked><span data-i18n="phase.auto">Auto</span></label>
+            <label class="phase-option"><input type="radio" name="phase" value="morning"><span data-i18n="phase.morning">Morning</span></label>
+            <label class="phase-option"><input type="radio" name="phase" value="afternoon"><span data-i18n="phase.afternoon">Afternoon</span></label>
+            <label class="phase-option"><input type="radio" name="phase" value="evening"><span data-i18n="phase.evening">Evening</span></label>
+            <label class="phase-option"><input type="radio" name="phase" value="night"><span data-i18n="phase.night">Night</span></label>
+          </div>
+        </fieldset>
         <div class="stage-tools">
           <button id="motion-btn" type="button" class="btn btn-tiny motion-btn" aria-pressed="false">Pause animation</button>
         </div>

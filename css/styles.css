@@ -172,11 +172,11 @@ legend { font-weight: 600; padding: 0 .5rem 0 0; }
 .air > h2 { margin-bottom: 1rem; }
 
 .stage {
-  /* Day grades by outdoor AQI band. */
+  /* First-paint defaults (clear afternoon). */
   --sky-1: #b9d4e2; --sky-2: #e6e4d6; --sky-3: #f1dfbf;
   --bloom: rgb(255 214 150 / 55%); --haze: rgb(200 170 120 / 0%);
   --skyline: #9aa3a6; --skyline-far: #c3c8c6; --verge: #6f8f4a; --road: #3f4144;
-  --hero-ink: #111;
+  --hero-ink: #111; /* the live grade is written by app.js from grade.js */
   /* Buddy colours (per buddy and mood, below). */
   --body: #ff8fab; --body-line: #d6336c; --leaf: #22c55e; --leaf-line: #15803d;
 
@@ -194,27 +194,20 @@ legend { font-weight: 600; padding: 0 .5rem 0 0; }
     --verge 1.6s var(--ease-in-out), --road 1.6s var(--ease-in-out),
     color 1.2s var(--ease-in-out);
 }
-.stage[data-band="moderate"] { --sky-1: #d9c6a3; --sky-2: #ead3aa; --sky-3: #e8be86; --bloom: rgb(255 190 110 / 60%); --haze: rgb(190 140 80 / 18%); --skyline: #8d7f6c; --skyline-far: #b8a68a; --verge: #7d8a4a; }
-.stage[data-band="sensitive"] { --sky-1: #cbb08a; --sky-2: #c49c6e; --sky-3: #b7865a; --bloom: rgb(255 170 90 / 35%); --haze: rgb(150 110 70 / 35%); --skyline: #6f5f4f; --skyline-far: #9a856c; --verge: #6f6f45; }
-.stage[data-band="unhealthy"] { --sky-1: #9a958d; --sky-2: #a39079; --sky-3: #9a7a5c; --bloom: rgb(240 150 80 / 22%); --haze: rgb(120 95 70 / 50%); --skyline: #4f463e; --skyline-far: #776a5c; --verge: #5b5a40; --road: #36383a; }
-.stage[data-band="very-unhealthy"] { --sky-1: #3e3b40; --sky-2: #5a4c48; --sky-3: #6e5040; --bloom: rgb(210 110 60 / 25%); --haze: rgb(90 60 45 / 55%); --skyline: #2a2421; --skyline-far: #4a3d36; --verge: #3d3a2c; --road: #2c2d2f; --hero-ink: #f3efe8; }
-.stage[data-band="hazardous"] { --sky-1: #141215; --sky-2: #2a1b18; --sky-3: #4a241a; --bloom: rgb(200 60 30 / 30%); --haze: rgb(70 30 20 / 60%); --skyline: #0d0b0b; --skyline-far: #2a1a16; --verge: #2a2219; --road: #1e1e20; --hero-ink: #f3efe8; }
-
-/* Night: OLED obsidian with a city glow tinted by the smog. */
-.stage[data-night="true"] { --sky-1: #05060a; --sky-2: #0d1018; --sky-3: #1b2233; --bloom: rgb(255 170 90 / 10%); --skyline: #000; --skyline-far: #151821; --verge: #141a12; --road: #18191c; --hero-ink: #f3efe8; }
-.stage[data-night="true"][data-band="moderate"] { --sky-3: #2a2418; --bloom: rgb(255 170 90 / 14%); }
-.stage[data-night="true"][data-band="sensitive"] { --sky-3: #33240f; --bloom: rgb(255 150 70 / 18%); }
-.stage[data-night="true"][data-band="unhealthy"] { --sky-3: #3a2414; --bloom: rgb(240 120 60 / 22%); }
-.stage[data-night="true"][data-band="very-unhealthy"] { --sky-3: #3f1c12; --bloom: rgb(220 90 40 / 26%); }
-.stage[data-night="true"][data-band="hazardous"] { --sky-3: #48140c; --bloom: rgb(210 60 30 / 30%); }
-
 .sky { position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, var(--sky-1) 0%, var(--sky-2) 58%, var(--sky-3) 100%); }
 .bloom {
-  position: absolute; left: 72%; top: 34%; width: 150%; aspect-ratio: 1; border-radius: 50%;
+  position: absolute; left: 62%; top: 10%; width: 150%; aspect-ratio: 1; border-radius: 50%;
   background: radial-gradient(circle, var(--bloom) 0%, transparent 58%);
   transform: translate(-50%, -50%);
+  transition: left 2.4s var(--ease-in-out), top 2.4s var(--ease-in-out);
   animation: bloom-breathe 16s var(--ease-soft) infinite alternate;
 }
+/* Where the light comes from: low in the east at sunrise, overhead at noon,
+   low in the west at sunset, and the city's own glow from below at night. */
+.stage[data-phase="morning"] .bloom { left: 14%; top: 66%; }
+.stage[data-phase="afternoon"] .bloom { left: 62%; top: 10%; }
+.stage[data-phase="evening"] .bloom { left: 88%; top: 74%; }
+.stage[data-phase="night"] .bloom { left: 50%; top: 100%; }
 .haze { position: absolute; left: -5%; right: -5%; bottom: 0; height: 80%; background: linear-gradient(0deg, var(--haze) 0%, var(--haze) 30%, transparent 100%); animation: haze-drift 24s var(--ease-soft) infinite alternate; }
 .grain {
   position: absolute; inset: -50%; pointer-events: none; opacity: .16; mix-blend-mode: soft-light;
@@ -535,6 +528,19 @@ legend { font-weight: 600; padding: 0 .5rem 0 0; }
 .sim-output { min-width: 3.5rem; align-self: center; text-align: right; font: 300 2rem/1 var(--font-sans); letter-spacing: -.03em; font-feature-settings: "tnum"; }
 
 .stage-tools { display: flex; justify-content: flex-end; margin: .6rem 0 0; }
+
+.phase-picker { border-top: 1px solid var(--rule); margin-top: 1rem; }
+.phase-picker legend { font: 500 .72rem/1 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); padding-bottom: .6rem; }
+.phase-options { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border: 1px solid var(--ink); border-radius: 2px; }
+.phase-option {
+  position: relative; display: flex; align-items: center; justify-content: center; min-height: 40px; margin: 0; padding: .2rem;
+  font: 500 .72rem/1.1 var(--font-mono); letter-spacing: .02em; text-align: center; cursor: pointer;
+  border-left: 1px solid var(--rule); transition: background .25s ease, color .25s ease;
+}
+.phase-option:first-child { border-left: 0; }
+.phase-option input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+.phase-option:has(input:checked) { background: var(--ink); color: var(--paper); }
+.phase-option:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
 
 .buddy-picker { border-top: 1px solid var(--rule); margin-top: .8rem; }
 .buddy-picker legend { font: 500 .72rem/1 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); padding-bottom: .6rem; }

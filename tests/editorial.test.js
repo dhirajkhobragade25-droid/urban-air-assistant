@@ -31,8 +31,10 @@ test('headline says "cleaner later" when smog is bad now and lifts in the aftern
   assert.equal(head.nowKey, 'head.now.hazardous');
   assert.deepEqual(head.next, { key: 'head.next.cleaner', hour: 14, nextDay: false });
   const T = createTranslator('en');
-  assert.equal(`${T(head.nowKey)} ${T(head.next.key, { clock: formatClock('en', 14), nextDay: false })}`,
-    'Dangerous smog now. Cleaner air around 2 PM.');
+  assert.equal(`${T(head.nowKey, { when: T('when.morning') })} ${T(head.next.key, { clock: formatClock('en', 14), nextDay: false })}`,
+    'Dangerous smog this morning. Cleaner air around 2 PM.');
+  const hi = createTranslator('hi');
+  assert.equal(hi(head.nowKey, { when: hi('when.night') }), 'आज रात ख़तरनाक स्मॉग है।');
 });
 
 test('headline warns when clean air now turns smoky tonight', () => {

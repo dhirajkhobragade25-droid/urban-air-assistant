@@ -42,7 +42,7 @@ export function aqiScale(aqi) {
  * The editorial hero copy: place and time, oversized AQI numeral, band name
  * and a one-line forecast ("Thick smog now. Cleaner air around 4 PM.").
  */
-export function heroNodes(view, T, lang) {
+export function heroNodes(view, T, lang, phase = 'afternoon') {
   if (!view) {
     return [
       el('p', { class: 'hero-meta', text: T('app.title') }),
@@ -52,7 +52,8 @@ export function heroNodes(view, T, lang) {
   }
   const { risk, snapshot, window } = view;
   const head = headlineFor({ band: risk.band, snapshot, window });
-  const meta = snapshot ? `${view.place} · ${snapshot.time.slice(11, 16)}` : T('hero.whatIf');
+  const when = T(`phase.${phase}`);
+  const meta = snapshot ? `${view.place} · ${when} · ${snapshot.time.slice(11, 16)}` : `${T('hero.whatIf')} · ${when}`;
   const next = head.next
     ? T(head.next.key, head.next.hour === undefined ? {} : { clock: formatClock(lang, head.next.hour), nextDay: head.next.nextDay })
     : '';
@@ -63,7 +64,7 @@ export function heroNodes(view, T, lang) {
       el('span', { class: 'unit', text: T('hero.unit') }),
     ]),
     el('p', { class: 'hero-band', dataset: { band: risk.band.key }, text: T(`band.${risk.band.key}`) }),
-    el('p', { class: 'hero-line' }, [T(head.nowKey), next ? ' ' : '', next ? el('span', { text: next }) : null]),
+    el('p', { class: 'hero-line' }, [T(head.nowKey, { when: T(`when.${phase}`) }), next ? ' ' : '', next ? el('span', { text: next }) : null]),
   ];
 }
 
