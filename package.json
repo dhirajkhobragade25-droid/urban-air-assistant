@@ -1,12 +1,14 @@
 {
   "name": "urban-air-quality-assistant",
   "version": "1.0.0",
-  "description": "GenAI assistant that turns live air-quality data into a personal plan of low-emission routines, indoor air hacks and sustainable switches.",
+  "description": "GenAI assistant that re-plans a family's day around winter smog: live AQI, low-emission routines, indoor air hacks and sustainable switches, with the impact of each choice explained.",
   "private": true,
   "type": "module",
   "scripts": {
+    "start": "python3 -m http.server 8080",
     "test": "node --test",
-    "start": "python3 -m http.server 8080"
+    "coverage": "node --test --experimental-test-coverage",
+    "check": "for f in js/*.js tests/*.js; do node --check \"$f\" || exit 1; done"
   },
   "engines": {
     "node": ">=20"

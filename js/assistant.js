@@ -3,6 +3,7 @@
  * client, and an offline rule-based answerer used as a fallback.
  */
 import { flattenPlan } from './advice.js';
+import { describeRoutineItem } from './routine.js';
 
 export const MAX_QUESTION_LENGTH = 300;
 /** Alias that always points at Google's current Flash model. */
@@ -37,6 +38,7 @@ export const isValidModel = (model) => typeof model === 'string' && MODEL_PATTER
 /** Keyword intents (English + Hindi/Hinglish) mapped to advice ids. */
 const INTENTS = Object.freeze([
   { name: 'mask', pattern: /mask|n95|ffp2|respirator|मास्क/i, ids: ['mask', 'rider', 'emergency'] },
+  { name: 'routine', pattern: /when should|what time|best time|which time|routine|schedule|go out|kab|कब|किस समय/i, ids: ['best-window'] },
   { name: 'exercise', pattern: /run|jog|exercise|workout|gym|walk|cycl|yoga|sport|play|दौड़|कसरत|टहल|खेल/i, ids: ['exercise-indoor', 'exercise-shift', 'outdoor-go', 'best-window', 'children'] },
   { name: 'purifier', pattern: /purifier|hepa|filter|प्यूरीफ़ायर|प्यूरीफायर|फ़िल्टर|फिल्टर/i, ids: ['purifier', 'diy-purifier', 'windows'] },
   { name: 'windows', pattern: /window|ventilat|air out|fresh air|खिड़की|हवा आने/i, ids: ['windows', 'ventilate', 'best-window'] },
@@ -71,13 +73,24 @@ export function describeAdvice(rec, translate) {
  * @param {{question:string, plan:object, risk:object, translate:Function,
  *   dosDonts?: {dos:Array, donts:Array}}} input
  */
-export function localAnswer({ question, plan, risk, translate, dosDonts = null }) {
+export function localAnswer({ question, plan, risk, translate, dosDonts = null, routinePlan = null }) {
   const headline = translate('local.headline', {
     aqi: risk.aqi,
     band: translate(`band.${risk.band.key}`),
     personal: translate(`band.${risk.personal.key}`),
   });
   const intentName = detectIntent(question);
+
+  if (intentName === 'routine' && routinePlan && routinePlan.length) {
+    return [
+      headline,
+      translate('local.day'),
+      ...routinePlan.map((item) => {
+        const text = describeRoutineItem(item, translate);
+        return `• ${text.name}: ${text.text}${text.note ? ` ${text.note}` : ''}`;
+      }),
+    ].join('\n');
+  }
 
   if (intentName === 'dosdonts' && dosDonts) {
     return [
@@ -112,6 +125,7 @@ export function buildSystemPrompt(lang) {
     'You are the Urban Air Quality Assistant. You help ordinary people, families and communities cope with winter smog and urban air pollution.',
     'Use ONLY the live data and plan given inside <context>. Never invent AQI or pollutant numbers.',
     'Give practical, specific advice: low-emission daily routines, indoor air-quality hacks and sustainable alternatives that fit the user\'s location and lifestyle.',
+    'When the question is about timing or the family\'s day, use dailyRoutinePlan: name the activity, the suggested time and the % less PM2.5 breathed in.',
     'For every suggestion, explain its direct impact in one short clause (exposure reduced, pollution avoided, or CO₂ saved, using the numbers in the context when available).',
     'Keep answers under 130 words, use short bullet points, no markdown headings, no tables.',
     'You are not a doctor. For severe symptoms such as breathlessness or chest pain, tell the user to seek medical care urgently.',
@@ -125,7 +139,9 @@ export function buildSystemPrompt(lang) {
  * @param {{question:string, place:string, snapshot:object|null, risk:object,
  *   profile:object, plan:object, translate:Function, dosDonts?:object}} input
  */
-export function buildUserPrompt({ question, place, snapshot, risk, profile, plan, translate, dosDonts = null }) {
+export function buildUserPrompt({
+  question, place, snapshot, risk, profile, plan, translate, dosDonts = null, routinePlan = null,
+}) {
   const context = {
     place: place || 'unknown',
     usAqi: risk.aqi,
@@ -142,6 +158,12 @@ export function buildUserPrompt({ question, place, snapshot, risk, profile, plan
         do: dosDonts.dos.map((d) => translate(`do.${d.id}`, d.params)),
         dont: dosDonts.donts.map((d) => translate(`dont.${d.id}`, d.params)),
       }
+      : undefined,
+    dailyRoutinePlan: routinePlan
+      ? routinePlan.map((item) => {
+        const text = describeRoutineItem(item, translate);
+        return `${text.name}: ${text.text}${text.note ? ` ${text.note}` : ''}`;
+      })
       : undefined,
   };
   return `<context>\n${JSON.stringify(context)}\n</context>\n<question>\n${sanitizeQuestion(question)}\n</question>`;

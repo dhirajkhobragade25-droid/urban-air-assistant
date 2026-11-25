@@ -1,63 +1,40 @@
 /**
- * UI controller: wires the DOM to the pure modules.
- * All dynamic text is set with textContent (never innerHTML).
+ * UI controller: owns the page state, listens to events and puts the nodes
+ * built by views.js on the page. All decisions live in the pure modules
+ * (engine, advice, routine, assistant), which are unit-tested.
  */
-import {
-  DEFAULT_PROFILE, normalizeProfile, findBestWindow, formatRange, whoMultiple, aqiScalePosition,
-} from './engine.js';
+import { DEFAULT_PROFILE, normalizeProfile, findBestWindow } from './engine.js';
 import { CATEGORIES, buildContext, buildPlan, buildDosDonts } from './advice.js';
-import { createTranslator, resolveLang, formatNumber } from './i18n.js';
+import { ACTIVITY_IDS, ROUTINE_HOURS, normalizeRoutine, planRoutine, summarizeImpact, formatHour } from './routine.js';
+import { createTranslator, resolveLang } from './i18n.js';
 import { createAirClient } from './api.js';
 import { moodForLevel, quipKey, renderMascot, resolveCharacter, DEFAULT_CHARACTER } from './mascot.js';
 import {
   DEFAULT_GEMINI_MODEL, MAX_QUESTION_LENGTH, askGemini, buildSystemPrompt, buildUserPrompt,
-  describeAdvice, isValidApiKey, isValidModel, localAnswer, sanitizeQuestion, toPlainLines,
+  isValidApiKey, isValidModel, localAnswer, sanitizeQuestion, toPlainLines,
 } from './assistant.js';
+import { $, el, prefersReducedMotion } from './dom.js';
+import { KEYS, openStorage, store } from './storage.js';
+import {
+  readoutNodes, planGroup, dosDontsSection, dayPlanSection, impactSection,
+} from './views.js';
 
-/* ---------- Storage (fails safely in private mode) ---------- */
-const KEYS = { lang: 'uaqa.lang', profile: 'uaqa.profile', place: 'uaqa.place', ai: 'uaqa.ai', buddy: 'uaqa.buddy' };
+const local = openStorage('localStorage');
+const session = openStorage('sessionStorage');
 
-function safeStorage(name) {
-  try {
-    const area = window[name];
-    const probe = '__uaqa__';
-    area.setItem(probe, probe);
-    area.removeItem(probe);
-    return area;
-  } catch {
-    return null;
-  }
-}
-const local = safeStorage('localStorage');
-const session = safeStorage('sessionStorage');
-
-const store = {
-  get(area, key) {
-    try { return area ? JSON.parse(area.getItem(key)) : null; } catch { return null; }
-  },
-  set(area, key, value) {
-    try { if (area) area.setItem(key, JSON.stringify(value)); } catch { /* quota or disabled */ }
-  },
-  remove(area, key) {
-    try { if (area) area.removeItem(key); } catch { /* ignore */ }
-  },
-};
-
-/* ---------- DOM ---------- */
-const $ = (selector) => document.querySelector(selector);
 const els = {
   searchForm: $('#search-form'),
   cityInput: $('#city-input'),
   searchBtn: $('#search-form button[type="submit"]'),
   gpsBtn: $('#gps-btn'),
+  quickCities: $('.quick-cities'),
   placeResults: $('#place-results'),
   placeList: $('#place-results ul'),
   status: $('#status'),
   stage: $('#stage'),
+  stageAqi: $('[data-role="stage-aqi"]'),
   motionBtn: $('#motion-btn'),
   buddyPicker: $('.buddy-picker'),
-  stageAqi: $('[data-role="stage-aqi"]'),
-  quickCities: $('.quick-cities'),
   readout: $('#readout'),
   simRange: $('#sim-range'),
   simOutput: $('#sim-output'),
@@ -69,6 +46,7 @@ const els = {
   chatInput: $('#chat-input'),
   chatBtn: $('#chat-form button[type="submit"]'),
   chatError: $('#chat-error'),
+  examples: $('.examples'),
   aiForm: $('#ai-form'),
   aiKey: $('#ai-key'),
   aiModel: $('#ai-model'),
@@ -77,26 +55,12 @@ const els = {
   aiStatus: $('#ai-status'),
 };
 
-/** Small element builder that only ever sets text, never HTML. */
-function el(tag, props = {}, children = []) {
-  const node = document.createElement(tag);
-  for (const [key, value] of Object.entries(props)) {
-    if (key === 'text') node.textContent = value;
-    else if (key === 'class') node.className = value;
-    else if (key === 'dataset') Object.assign(node.dataset, value);
-    else node.setAttribute(key, value);
-  }
-  for (const child of [].concat(children)) if (child !== null && child !== undefined) node.append(child);
-  return node;
-}
-
-const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
 /* ---------- State ---------- */
 const client = createAirClient();
 const state = {
   lang: 'en',
   profile: normalizeProfile(DEFAULT_PROFILE),
+  routine: normalizeRoutine(null),
   live: null, // { place: {label, labelKey?, latitude, longitude}, snapshot }
   simulatedAqi: null,
   ai: { apiKey: '', model: DEFAULT_GEMINI_MODEL },
@@ -108,13 +72,13 @@ const state = {
   requestId: 0,
   paused: false,
   frame: 0,
-  openGroups: new Map(), // category → user's open/closed choice
+  openGroups: new Map(), // plan category → the user's own open/closed choice
 };
 let T = createTranslator('en');
 
 const placeName = (place) => (place.labelKey ? T(place.labelKey) : place.label);
 
-/* ---------- Status ---------- */
+/* ---------- Status line ---------- */
 function errorParams(error) {
   return { reasonCode: (error && error.code) || 'network', reasonParams: (error && error.params) || {} };
 }
@@ -137,6 +101,9 @@ function applyStaticText() {
   document.title = T('app.title');
   document.querySelectorAll('[data-i18n]').forEach((node) => { node.textContent = T(node.dataset.i18n); });
   document.querySelectorAll('[data-i18n-placeholder]').forEach((node) => { node.placeholder = T(node.dataset.i18nPlaceholder); });
+  document.querySelectorAll('[data-i18n-label]').forEach((node) => {
+    node.setAttribute('aria-label', T(node.dataset.i18nLabel, { activity: T(node.dataset.i18nActivity) }));
+  });
   document.querySelectorAll('.lang-btn').forEach((btn) => btn.setAttribute('aria-pressed', String(btn.dataset.lang === state.lang)));
   updateMotionButton();
 }
@@ -159,6 +126,13 @@ function computeView() {
   const aqi = simulated ? state.simulatedAqi : snapshot.aqi;
   const window = snapshot ? findBestWindow(snapshot.hourly, snapshot.time) : null;
   const context = buildContext({ aqi, profile: state.profile, window });
+  const routinePlan = planRoutine({
+    routine: state.routine,
+    aqi,
+    hourly: snapshot ? snapshot.hourly : [],
+    fromTime: snapshot ? snapshot.time : null,
+    commute: state.profile.commute,
+  });
   return {
     aqi,
     snapshot,
@@ -166,82 +140,26 @@ function computeView() {
     risk: context.risk,
     plan: buildPlan(context),
     dosDonts: buildDosDonts(context),
+    routinePlan,
+    impact: summarizeImpact({ profile: state.profile, routinePlan }),
     place: simulated || !state.live ? null : placeName(state.live.place),
   };
 }
 
 function render() {
   state.view = computeView();
-  renderReadout(state.view);
+  els.readout.replaceChildren(...readoutNodes(state.view, T, state.lang));
   renderMascotView(state.view);
   renderPlan(state.view);
 }
 
-/** Coalesces rapid slider input into one render per animation frame. */
+/** Coalesces rapid slider and form input into one render per animation frame. */
 function scheduleRender() {
   if (state.frame) return;
   state.frame = requestAnimationFrame(() => {
     state.frame = 0;
     render();
   });
-}
-
-function renderReadout(view) {
-  const box = els.readout;
-  box.replaceChildren();
-  if (!view) {
-    box.append(el('p', { class: 'empty', text: T('air.empty') }));
-    return;
-  }
-  const { risk, snapshot, window } = view;
-  box.append(
-    el('div', { class: 'aqi-big' }, [
-      el('span', { class: 'aqi-number', text: String(view.aqi) }),
-      el('span', { class: 'aqi-unit', text: T('air.aqiLabel') }),
-    ]),
-    el('span', { class: 'band-chip', dataset: { band: risk.band.key }, text: T(`band.${risk.band.key}`) }),
-    el('p', { class: 'personal' }, [
-      el('span', { class: 'band-chip', dataset: { band: risk.personal.key }, text: T('air.personal', { label: T(`band.${risk.personal.key}`) }) }),
-    ]),
-  );
-  if (risk.raised) box.append(el('p', { class: 'raised', text: T('air.raised') }));
-  box.append(aqiScale(view.aqi));
-
-  if (!snapshot) {
-    box.append(el('p', { class: 'hint', text: T('air.simulated') }));
-    return;
-  }
-
-  const readings = [['air.pm25', snapshot.pm25], ['air.pm10', snapshot.pm10], ['air.no2', snapshot.no2], ['air.o3', snapshot.o3]]
-    .filter(([, value]) => value !== null)
-    .map(([key, value]) => el('div', {}, [el('dt', { text: T(key) }), el('dd', { text: formatNumber(state.lang, Math.round(value)) })]));
-  if (readings.length) {
-    box.append(el('p', { class: 'hint', text: T('air.pollutants') }), el('dl', { class: 'pollutants' }, readings));
-  }
-
-  const multiple = whoMultiple(snapshot.pm25);
-  if (multiple !== null) {
-    box.append(el('p', { text: multiple > 1 ? T('air.who', { x: formatNumber(state.lang, multiple) }) : T('air.whoOk') }));
-  }
-
-  if (window) {
-    box.append(el('ul', { class: 'windows' }, [
-      el('li', { class: 'is-best', text: T('air.best', { range: formatRange(window.start, window.hours), nextDay: window.nextDay }) }),
-      el('li', { class: 'is-worst', text: T('air.worst', { range: formatRange(window.worstStart, window.hours), nextDay: window.worstNextDay }) }),
-    ]));
-  }
-  box.append(el('p', { class: 'updated', text: T('air.updated', { time: snapshot.time.slice(11, 16) }) }));
-}
-
-/** Colour scale with a marker; decorative because the band is also shown as text. */
-function aqiScale(aqi) {
-  const marker = el('span', { class: 'aqi-marker' });
-  marker.style.setProperty('--pos', `${aqiScalePosition(aqi)}%`);
-  return el('div', { class: 'aqi-scale', 'aria-hidden': 'true' }, [
-    el('div', { class: 'aqi-scale-bar' }, Array.from({ length: 6 }, () => el('span'))),
-    marker,
-    el('div', { class: 'aqi-ticks' }, ['0', '50', '100', '150', '200', '300', '500'].map((n) => el('span', { text: n }))),
-  ]);
 }
 
 function renderStageBadge(view) {
@@ -269,50 +187,31 @@ function renderMascotView(view) {
   });
 }
 
-function adviceCard(rec) {
-  const text = describeAdvice(rec, T);
-  return el('li', { class: 'advice', dataset: { priority: String(rec.priority) } }, [
-    el('div', { class: 'advice-head' }, [
-      el('p', { class: 'advice-title', text: text.title }),
-      el('span', { class: 'prio-tag', text: T(`priority.${rec.priority}`) }),
-    ]),
-    el('p', { class: 'advice-action', text: text.action }),
-    el('p', { class: 'advice-why' }, [el('strong', { text: T('plan.why') }), text.why]),
-  ]);
-}
-
 function renderPlan(view) {
-  els.plan.replaceChildren();
   if (!view) {
-    els.plan.append(el('p', { class: 'empty', text: T('plan.needData') }));
+    els.plan.replaceChildren(el('p', { class: 'empty', text: T('plan.needData') }));
     return;
   }
-  els.plan.append(renderDosDonts(view.dosDonts));
   const total = CATEGORIES.reduce((sum, c) => sum + view.plan[c].length, 0);
-  for (const category of CATEGORIES) {
+  const groups = CATEGORIES.map((category) => {
     const items = view.plan[category];
-    const urgent = items.some((rec) => rec.priority === 1);
-    // Open groups that need action now (or everything when the plan is short),
-    // unless the user has opened/closed this group themselves.
-    const open = state.openGroups.has(category) ? state.openGroups.get(category) : urgent || total <= 6;
-    const group = el('details', { class: 'plan-group', dataset: { category } }, [
-      el('summary', {}, [
-        el('h3', { id: `plan-${category}`, text: T(`plan.cat.${category}`) }),
-        el('span', { class: `plan-count${urgent ? ' has-urgent' : ''}`, text: String(items.length) }),
-      ]),
-      items.length
-        ? el('ul', {}, items.map(adviceCard))
-        : el('p', { class: 'empty', text: T('plan.empty') }),
-    ]);
-    group.open = open;
-    els.plan.append(group);
-  }
+    // Open groups that need action now (or all of them when the plan is
+    // short), unless the user has opened or closed the group themselves.
+    const fallback = items.some((rec) => rec.priority === 1) || total <= 6;
+    const open = state.openGroups.has(category) ? state.openGroups.get(category) : fallback;
+    return planGroup({ category, items, open }, T);
+  });
+  els.plan.replaceChildren(
+    impactSection(view.impact, T, state.lang),
+    dayPlanSection(view.routinePlan, Boolean(view.snapshot), T),
+    dosDontsSection(view.dosDonts, T),
+    ...groups,
+  );
 }
 
 /**
- * Remembers groups the user opens or closes. Uses the summary click (fired
- * for mouse, touch and keyboard) because "toggle" also fires when the code
- * opens a group, which is not a user choice.
+ * Remembers groups the user opens or closes. Uses the summary click (fired for
+ * mouse, touch and keyboard) because "toggle" also fires when code opens a group.
  */
 function onPlanSummaryClick(event) {
   const summary = event.target.closest('details.plan-group > summary');
@@ -321,24 +220,13 @@ function onPlanSummaryClick(event) {
   state.openGroups.set(group.dataset.category, !group.open);
 }
 
-function renderDosDonts({ dos, donts }) {
-  const column = (kind, list, prefix) => el('div', { class: `dd-col dd-${kind}` }, [
-    el('h4', { text: T(`dd.${kind}`) }),
-    el('ul', {}, list.map((item) => el('li', { text: T(`${prefix}.${item.id}`, item.params) }))),
-  ]);
-  return el('section', { class: 'dd', 'aria-labelledby': 'dd-heading' }, [
-    el('h3', { id: 'dd-heading', text: T('dd.heading') }),
-    el('div', { class: 'dd-cols' }, [column('do', dos, 'do'), column('dont', donts, 'dont')]),
-  ]);
-}
-
 /* ---------- Location ---------- */
 function setLocating(busy, button = els.searchBtn) {
-  els.searchBtn.disabled = busy;
-  els.gpsBtn.disabled = busy;
-  els.quickCities.querySelectorAll('button').forEach((btn) => { btn.disabled = busy; });
-  button.classList.toggle('is-loading', busy);
-  if (!busy) [els.searchBtn, els.gpsBtn].forEach((btn) => btn.classList.remove('is-loading'));
+  [els.searchBtn, els.gpsBtn, ...els.quickCities.querySelectorAll('button')].forEach((btn) => {
+    btn.disabled = busy;
+    if (!busy) btn.classList.remove('is-loading');
+  });
+  if (busy) button.classList.add('is-loading');
   els.readout.setAttribute('aria-busy', String(busy));
 }
 
@@ -357,14 +245,31 @@ async function loadPlace(place) {
   render();
 }
 
+/** Runs a location task with the busy state and error reporting handled. */
+async function withLocating(button, task) {
+  setLocating(true, button);
+  try {
+    await task();
+  } catch (error) {
+    setStatus('status.error', errorParams(error), true);
+  } finally {
+    setLocating(false);
+  }
+}
+
 function showPlaceChoices(places) {
   els.placeList.replaceChildren(...places.map((place) => el('li', {}, [
-    el('button', { type: 'button', class: 'btn', dataset: { lat: String(place.latitude), lon: String(place.longitude), label: place.label }, text: place.label }),
+    el('button', {
+      type: 'button',
+      class: 'btn',
+      dataset: { lat: String(place.latitude), lon: String(place.longitude), label: place.label },
+      text: place.label,
+    }),
   ])));
   els.placeResults.hidden = places.length < 2;
 }
 
-async function onSearch(event) {
+function onSearch(event) {
   event.preventDefault();
   const query = els.cityInput.value.trim();
   if (!query) {
@@ -372,35 +277,24 @@ async function onSearch(event) {
     els.cityInput.focus();
     return;
   }
-  setLocating(true);
-  setStatus('status.searching');
-  try {
+  withLocating(els.searchBtn, async () => {
+    setStatus('status.searching');
     const places = await client.searchPlaces(query, state.lang);
+    showPlaceChoices(places);
     if (!places.length) {
-      showPlaceChoices([]);
       setStatus('status.noPlace', {}, true);
       return;
     }
-    showPlaceChoices(places);
     await loadPlace(places[0]);
-  } catch (error) {
-    setStatus('status.error', errorParams(error), true);
-  } finally {
-    setLocating(false);
-  }
+  });
 }
 
-async function onPlaceChoice(event) {
+function onPlaceChoice(event) {
   const btn = event.target.closest('button[data-lat]');
   if (!btn) return;
-  setLocating(true);
-  try {
-    await loadPlace({ label: btn.dataset.label, latitude: Number(btn.dataset.lat), longitude: Number(btn.dataset.lon) });
-  } catch (error) {
-    setStatus('status.error', errorParams(error), true);
-  } finally {
-    setLocating(false);
-  }
+  withLocating(els.searchBtn, () => loadPlace({
+    label: btn.dataset.label, latitude: Number(btn.dataset.lat), longitude: Number(btn.dataset.lon),
+  }));
 }
 
 function onGps() {
@@ -411,15 +305,9 @@ function onGps() {
   setLocating(true, els.gpsBtn);
   setStatus('status.loading');
   navigator.geolocation.getCurrentPosition(
-    async ({ coords }) => {
-      try {
-        await loadPlace({ labelKey: 'loc.myLocation', latitude: coords.latitude, longitude: coords.longitude });
-      } catch (error) {
-        setStatus('status.error', errorParams(error), true);
-      } finally {
-        setLocating(false);
-      }
-    },
+    ({ coords }) => withLocating(els.gpsBtn, () => loadPlace({
+      labelKey: 'loc.myLocation', latitude: coords.latitude, longitude: coords.longitude,
+    })),
     () => {
       setStatus('status.gpsDenied', {}, true);
       setLocating(false);
@@ -435,7 +323,7 @@ function onQuickCity(event) {
   els.searchForm.requestSubmit();
 }
 
-/* ---------- Simulator ---------- */
+/* ---------- "What if?" simulator ---------- */
 function onSimulate() {
   const value = Number(els.simRange.value);
   els.simOutput.value = String(value);
@@ -457,9 +345,15 @@ function onSimReset() {
   els.simRange.focus();
 }
 
-/* ---------- Profile ---------- */
+/* ---------- Profile & routine ---------- */
 const field = (name) => els.profileForm.elements.namedItem(name);
 const CHECKBOXES = ['children', 'elderly', 'respiratory', 'pregnant', 'purifier', 'outdoorExercise'];
+
+function fillTimeOptions() {
+  ACTIVITY_IDS.forEach((id) => {
+    field(`time-${id}`).replaceChildren(...ROUTINE_HOURS.map((h) => el('option', { value: String(h), text: formatHour(h) })));
+  });
+}
 
 function readProfile() {
   const raw = Object.fromEntries(CHECKBOXES.map((name) => [name, field(name).checked]));
@@ -469,22 +363,43 @@ function readProfile() {
   return normalizeProfile(raw);
 }
 
-function writeProfile(profile) {
+function readRoutine() {
+  return normalizeRoutine(Object.fromEntries(ACTIVITY_IDS.map((id) => [
+    id, field(`act-${id}`).checked ? Number(field(`time-${id}`).value) : null,
+  ])));
+}
+
+function writeProfile(profile, routine) {
   CHECKBOXES.forEach((name) => { field(name).checked = profile[name]; });
   field('commute').value = profile.commute;
   field('cooking').value = profile.cooking;
   field('commuteKm').value = String(profile.commuteKm);
-  field('commuteKm').disabled = profile.commute === 'wfh';
+  ACTIVITY_IDS.forEach((id) => {
+    const hour = routine[id];
+    field(`act-${id}`).checked = hour !== null;
+    field(`time-${id}`).value = String(hour === null ? ROUTINE_HOURS[0] : hour);
+  });
+  syncDisabledFields();
+}
+
+/** Inputs that make no sense in the current state are disabled, not hidden. */
+function syncDisabledFields() {
+  const wfh = field('commute').value === 'wfh';
+  field('commuteKm').disabled = wfh;
+  field('act-commute').disabled = wfh;
+  ACTIVITY_IDS.forEach((id) => { field(`time-${id}`).disabled = !field(`act-${id}`).checked || field(`act-${id}`).disabled; });
 }
 
 function onProfileChange() {
   state.profile = readProfile();
-  field('commuteKm').disabled = state.profile.commute === 'wfh';
+  state.routine = readRoutine();
+  syncDisabledFields();
   store.set(local, KEYS.profile, state.profile);
+  store.set(local, KEYS.routine, state.routine);
   scheduleRender();
 }
 
-/* ---------- Buddy choice ---------- */
+/* ---------- Buddy & motion ---------- */
 function onBuddyChange(event) {
   if (event.target.name !== 'buddy') return;
   state.character = resolveCharacter(event.target.value);
@@ -492,7 +407,6 @@ function onBuddyChange(event) {
   renderMascotView(state.view);
 }
 
-/* ---------- Mascot motion control ---------- */
 function updateMotionButton() {
   els.stage.classList.toggle('is-paused', state.paused);
   els.motionBtn.setAttribute('aria-pressed', String(state.paused));
@@ -534,17 +448,17 @@ function onAiClear() {
 }
 
 /* ---------- Chat ---------- */
+function fillMessage(item, role, lines, sourceKey) {
+  const meta = role === 'user' ? T('chat.you') : `${T('chat.bot')} · ${T(sourceKey)}`;
+  item.replaceChildren(el('p', { class: 'msg-meta', text: meta }), ...lines.map((line) => el('p', { text: line })));
+}
+
 function appendMessage(role, lines, sourceKey) {
   const item = el('li', { class: `msg msg-${role}` });
   fillMessage(item, role, lines, sourceKey);
   els.chatLog.append(item);
   item.scrollIntoView({ block: 'nearest', behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
   return item;
-}
-
-function fillMessage(item, role, lines, sourceKey) {
-  const meta = role === 'user' ? T('chat.you') : `${T('chat.bot')} · ${T(sourceKey)}`;
-  item.replaceChildren(el('p', { class: 'msg-meta', text: meta }), ...lines.map((line) => el('p', { text: line })));
 }
 
 async function onAsk(event) {
@@ -571,7 +485,7 @@ async function onAsk(event) {
     return;
   }
   const builtIn = () => localAnswer({
-    question, plan: view.plan, risk: view.risk, translate: T, dosDonts: view.dosDonts,
+    question, plan: view.plan, risk: view.risk, translate: T, dosDonts: view.dosDonts, routinePlan: view.routinePlan,
   }).split('\n');
 
   if (!state.ai.apiKey) {
@@ -594,6 +508,7 @@ async function onAsk(event) {
         profile: state.profile,
         plan: view.plan,
         dosDonts: view.dosDonts,
+        routinePlan: view.routinePlan,
         translate: T,
       }),
     });
@@ -614,7 +529,7 @@ function onExample(event) {
 }
 
 /* ---------- Boot ---------- */
-function init() {
+function restoreSettings() {
   const savedLang = store.get(local, KEYS.lang);
   const browserHindi = (navigator.language || '').toLowerCase().startsWith('hi');
   state.lang = resolveLang(savedLang || (browserHindi ? 'hi' : 'en'));
@@ -624,7 +539,9 @@ function init() {
   els.buddyPicker.querySelectorAll('input[name="buddy"]').forEach((input) => { input.checked = input.value === state.character; });
 
   state.profile = normalizeProfile(store.get(local, KEYS.profile) || DEFAULT_PROFILE);
-  writeProfile(state.profile);
+  state.routine = normalizeRoutine(store.get(local, KEYS.routine));
+  fillTimeOptions();
+  writeProfile(state.profile, state.routine);
 
   const savedAi = store.get(session, KEYS.ai);
   if (savedAi && isValidApiKey(savedAi.apiKey)) {
@@ -633,16 +550,18 @@ function init() {
     els.aiRemember.checked = true;
   }
   els.aiModel.value = state.ai.model;
+}
 
+function bindEvents() {
   els.searchForm.addEventListener('submit', onSearch);
   els.placeList.addEventListener('click', onPlaceChoice);
   els.gpsBtn.addEventListener('click', onGps);
+  els.quickCities.addEventListener('click', onQuickCity);
   els.simRange.addEventListener('input', onSimulate);
   els.simReset.addEventListener('click', onSimReset);
   els.profileForm.addEventListener('change', onProfileChange);
   els.profileForm.addEventListener('submit', (event) => event.preventDefault());
   els.buddyPicker.addEventListener('change', onBuddyChange);
-  els.quickCities.addEventListener('click', onQuickCity);
   els.plan.addEventListener('click', onPlanSummaryClick);
   els.motionBtn.addEventListener('click', () => {
     state.paused = !state.paused;
@@ -655,11 +574,15 @@ function init() {
       els.chatForm.requestSubmit();
     }
   });
-  document.querySelector('.examples').addEventListener('click', onExample);
+  els.examples.addEventListener('click', onExample);
   els.aiForm.addEventListener('submit', onAiSave);
   els.aiClear.addEventListener('click', onAiClear);
   document.querySelectorAll('.lang-btn').forEach((btn) => btn.addEventListener('click', () => setLang(btn.dataset.lang)));
+}
 
+function init() {
+  restoreSettings();
+  bindEvents();
   applyStaticText();
   renderAiStatus();
   render();
@@ -667,8 +590,9 @@ function init() {
   const lastPlace = store.get(local, KEYS.place);
   if (lastPlace && typeof lastPlace.label === 'string') {
     els.cityInput.value = lastPlace.label.split(',')[0];
-    loadPlace({ label: lastPlace.label, latitude: Number(lastPlace.latitude), longitude: Number(lastPlace.longitude) })
-      .catch((error) => setStatus('status.error', errorParams(error), true));
+    withLocating(els.searchBtn, () => loadPlace({
+      label: lastPlace.label, latitude: Number(lastPlace.latitude), longitude: Number(lastPlace.longitude),
+    }));
   }
 }
 

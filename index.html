@@ -189,6 +189,34 @@
           <label class="check"><input type="checkbox" name="purifier"> <span data-i18n="profile.purifier">I have an air purifier</span></label>
           <label class="check"><input type="checkbox" name="outdoorExercise"> <span data-i18n="profile.exercise">I exercise outdoors</span></label>
         </fieldset>
+        <fieldset class="routine">
+          <legend data-i18n="routine.legend">Your usual day outdoors</legend>
+          <p class="hint" data-i18n="routine.hint">Tick what your family does outside and when. We’ll look for cleaner hours.</p>
+          <div class="routine-row">
+            <label class="check"><input type="checkbox" name="act-outdoor-exercise" data-activity="outdoor-exercise"> <span data-i18n="act.outdoor-exercise">Exercise or jog</span></label>
+            <select name="time-outdoor-exercise" data-activity-time="outdoor-exercise" data-i18n-label="routine.timeFor" data-i18n-activity="act.outdoor-exercise" aria-label="Time for Exercise or jog"></select>
+          </div>
+          <div class="routine-row">
+            <label class="check"><input type="checkbox" name="act-school-run" data-activity="school-run"> <span data-i18n="act.school-run">School drop-off</span></label>
+            <select name="time-school-run" data-activity-time="school-run" data-i18n-label="routine.timeFor" data-i18n-activity="act.school-run" aria-label="Time for School drop-off"></select>
+          </div>
+          <div class="routine-row">
+            <label class="check"><input type="checkbox" name="act-commute" data-activity="commute"> <span data-i18n="act.commute">Commute to work or college</span></label>
+            <select name="time-commute" data-activity-time="commute" data-i18n-label="routine.timeFor" data-i18n-activity="act.commute" aria-label="Time for Commute to work or college"></select>
+          </div>
+          <div class="routine-row">
+            <label class="check"><input type="checkbox" name="act-errands" data-activity="errands"> <span data-i18n="act.errands">Market and errands</span></label>
+            <select name="time-errands" data-activity-time="errands" data-i18n-label="routine.timeFor" data-i18n-activity="act.errands" aria-label="Time for Market and errands"></select>
+          </div>
+          <div class="routine-row">
+            <label class="check"><input type="checkbox" name="act-kids-play" data-activity="kids-play"> <span data-i18n="act.kids-play">Kids’ outdoor play</span></label>
+            <select name="time-kids-play" data-activity-time="kids-play" data-i18n-label="routine.timeFor" data-i18n-activity="act.kids-play" aria-label="Time for Kids’ outdoor play"></select>
+          </div>
+          <div class="routine-row">
+            <label class="check"><input type="checkbox" name="act-evening-walk" data-activity="evening-walk"> <span data-i18n="act.evening-walk">Evening walk</span></label>
+            <select name="time-evening-walk" data-activity-time="evening-walk" data-i18n-label="routine.timeFor" data-i18n-activity="act.evening-walk" aria-label="Time for Evening walk"></select>
+          </div>
+        </fieldset>
       </form>
     </section>
 
@@ -211,6 +239,7 @@
         <button type="button" class="chip" data-example="chat.ex2" data-i18n="chat.ex2">Do I need a mask?</button>
         <button type="button" class="chip" data-example="chat.ex3" data-i18n="chat.ex3">How do I cut smoke while cooking?</button>
         <button type="button" class="chip" data-example="chat.ex4" data-i18n="chat.ex4">What should I avoid today?</button>
+        <button type="button" class="chip" data-example="chat.ex5" data-i18n="chat.ex5">When should we go out today?</button>
       </div>
       <form id="chat-form" class="chat-form" novalidate>
         <label for="chat-input" data-i18n="chat.label">Your question</label>
