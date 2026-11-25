@@ -84,3 +84,50 @@ export function buildCurve(series, { width = 320, height = 140 } = {}) {
   const area = `${line}L${f(last.x)} ${height}L${f(points[0].x)} ${height}Z`;
   return { points, line, area, yMax, x, y };
 }
+
+/* ---------- AQI ring gauge ---------- */
+
+/**
+ * The hero's ring: a 270° dial split into the six AQI bands, opening at the
+ * bottom. Coordinates are in a 200 × 200 viewBox; angles in degrees, SVG
+ * style (0° points right, clockwise is positive).
+ */
+export const GAUGE = Object.freeze({ cx: 100, cy: 100, r: 84, start: 135, sweep: 270, gap: 6, segments: 6 });
+
+const round2 = (n) => Math.round(n * 100) / 100;
+const clampPct = (n) => Math.min(Math.max(Number(n) || 0, 0), 100);
+
+/** A point on the ring at `angle`. */
+export function polarPoint(angle, r = GAUGE.r, g = GAUGE) {
+  const t = (angle * Math.PI) / 180;
+  return { x: round2(g.cx + r * Math.cos(t)), y: round2(g.cy + r * Math.sin(t)) };
+}
+
+/** SVG path for a clockwise arc from angle a0 to a1. */
+export function arcPath(a0, a1, r = GAUGE.r, g = GAUGE) {
+  const p0 = polarPoint(a0, r, g);
+  const p1 = polarPoint(a1, r, g);
+  const large = a1 - a0 > 180 ? 1 : 0;
+  return `M${p0.x} ${p0.y}A${r} ${r} 0 ${large} 1 ${p1.x} ${p1.y}`;
+}
+
+/** The six band segments of the dial, with a small gap between each. */
+export function gaugeSegments(g = GAUGE) {
+  const each = g.sweep / g.segments;
+  return Array.from({ length: g.segments }, (_, i) => {
+    const a0 = g.start + i * each + g.gap / 2;
+    const a1 = g.start + (i + 1) * each - g.gap / 2;
+    return { a0, a1, d: arcPath(a0, a1, g.r, g) };
+  });
+}
+
+/** Where the marker sits for a scale position (0–100, from aqiScalePosition). */
+export function gaugeAngle(position, g = GAUGE) {
+  return round2(g.start + (clampPct(position) / 100) * g.sweep);
+}
+
+/** How much of each band segment is lit (0–1) for a scale position. */
+export function gaugeFills(position, g = GAUGE) {
+  const p = clampPct(position) / 100;
+  return Array.from({ length: g.segments }, (_, i) => round2(Math.min(Math.max((p - i / g.segments) * g.segments, 0), 1)));
+}

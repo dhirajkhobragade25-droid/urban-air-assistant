@@ -3,12 +3,14 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src https://air-quality-api.open-meteo.com https://geocoding-api.open-meteo.com https://generativelanguage.googleapis.com; base-uri 'none'; form-action 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src https://air-quality-api.open-meteo.com https://geocoding-api.open-meteo.com https://generativelanguage.googleapis.com; base-uri 'none'; form-action 'none'">
   <meta name="referrer" content="no-referrer">
   <meta name="description" content="A GenAI assistant that turns live air-quality data into a personal plan: low-emission routines, indoor air hacks and sustainable switches, with the impact of each choice explained.">
   <meta name="theme-color" content="#f3f1ec">
   <title>Urban Air Quality Assistant</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="fonts/poppins-400.woff" as="font" type="font/woff" crossorigin>
+  <link rel="preload" href="fonts/poppins-300.woff" as="font" type="font/woff" crossorigin>
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body data-screen="setup-place">
@@ -284,9 +286,8 @@
 
   <dialog id="settings" class="sheet" aria-labelledby="settings-title">
     <div class="sheet-head">
-      <span class="grabber" aria-hidden="true"></span>
       <h2 id="settings-title" data-i18n="settings.title">Settings</h2>
-      <button id="settings-done" type="button" class="link-btn sheet-done" data-i18n="settings.done">Done</button>
+      <button id="settings-done" type="button" class="btn btn-tiny sheet-done" data-i18n="settings.done">Done</button>
     </div>
     <div class="sheet-body">
       <section class="list-group" aria-labelledby="set-you-label">

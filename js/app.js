@@ -8,8 +8,8 @@ import { CATEGORIES, buildContext, buildPlan, buildDosDonts } from './advice.js'
 import { ACTIVITY_IDS, ROUTINE_HOURS, normalizeRoutine, planRoutine, summarizeImpact, formatHour } from './routine.js';
 import { createTranslator, resolveLang } from './i18n.js';
 import { PHASES, phaseForHour, gradeFor } from './grade.js';
-import { atmosphereFor, heroGlassFor } from './glass.js';
-import { enablePress, createLens } from './press.js';
+import { skyFor, heroGlassFor } from './glass.js';
+import { enablePress, enableWipe, createLens } from './press.js';
 import {
   startScreen, afterPlace, normalizeSetup, demoStartAqi, shortPlace, placeToStore, restorePlace,
 } from './flow.js';
@@ -22,7 +22,7 @@ import {
 import { $, el, prefersReducedMotion } from './dom.js';
 import { KEYS, openStorage, store } from './storage.js';
 import {
-  heroNodes, readoutNodes, planGroup, dosDontsSection, dayPlanSection, impactSection,
+  heroNodes, animateGauge, readoutNodes, planGroup, dosDontsSection, dayPlanSection, impactSection,
 } from './views.js';
 
 const local = openStorage('localStorage');
@@ -103,6 +103,7 @@ const state = {
   editing: false, // true when a setup step was opened from Settings
   setupDone: false,
   demo: false, // demo mode: the only place where AQI and time of day can be set by hand
+  lastGauge: null, // {aqi, position} of the ring last drawn, so the next one can glide from it
   quipSeed: 0,
   requestId: 0,
   paused: false,
@@ -246,6 +247,7 @@ function renderSetupPreview() {
   els.setupPreview.hidden = !live;
   if (!live) return;
   const band = categorize(live.snapshot.aqi).key;
+  els.setupPreview.dataset.band = band;
   els.setupPreview.textContent = T('setup.preview', {
     place: shortPlace(placeName(live.place)), aqi: live.snapshot.aqi, band: T(`band.${band}`),
   });
@@ -268,14 +270,18 @@ function renderHero(view) {
   const glass = heroGlassFor(grade.ink);
   els.stage.style.setProperty('--hero-glass', glass.css);
   els.stage.dataset.glass = glass.tone;
-  // The page backdrop takes the same light, washed out so glass text still reads.
-  const atmosphere = atmosphereFor(grade);
-  for (const [name, value] of Object.entries(atmosphere)) els.atmosphere.style.setProperty(name, value);
-  els.themeColour?.setAttribute('content', atmosphere['--atmo-1']);
+  // The whole page takes one sky colour for the time of day only: the AQI
+  // changes the scene above, never the page or the cards below it.
+  const sky = skyFor(grade.phase);
+  for (const [name, value] of Object.entries(sky.vars)) document.documentElement.style.setProperty(name, value);
+  els.themeColour?.setAttribute('content', state.screen === 'main' ? grade.vars['--sky-1'] : sky.stops[0]);
   els.stage.dataset.band = band;
   els.stage.dataset.phase = grade.phase;
   els.stage.dataset.night = String(grade.phase === 'night');
   els.heroCopy.replaceChildren(...heroNodes(view, T, state.lang, grade.phase, { demo: state.demo }));
+  // The ring glides from the last reading to this one (and counts the number up).
+  const gauge = els.heroCopy.querySelector('.gauge');
+  state.lastGauge = gauge ? animateGauge(gauge, state.lastGauge, { reducedMotion: prefersReducedMotion() }) : null;
   if (!view) {
     els.heroCopy.append(el('button', {
       type: 'button', class: 'btn btn-primary hero-cta', dataset: { action: 'choose-city' }, text: T('home.choose'),
@@ -798,6 +804,7 @@ function bindEvents() {
   document.querySelectorAll('.lang-btn').forEach((btn) => btn.addEventListener('click', () => setLang(btn.dataset.lang)));
   els.tabbar.addEventListener('click', onTabClick);
   enablePress(document, { reducedMotion: prefersReducedMotion });
+  enableWipe(document, { reducedMotion: prefersReducedMotion });
 }
 
 function init() {

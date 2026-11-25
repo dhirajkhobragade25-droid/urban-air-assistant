@@ -7,7 +7,7 @@ A GenAI-powered assistant that helps families and communities get through **seve
 > **Live demo:** https://dhirajkhobragade25-droid.github.io/urban-air-assistant/
 > Works in **English and Hindi**, on any phone or desktop browser, with no sign-up.
 
-![Phone screens: hazardous morning air in Delhi, a clean-air afternoon with the buddy cycling, and the family's re-planned day, on liquid-glass sheets with a floating tab bar](docs/screenshot.png)
+![Phone screens: the one-time household setup, hazardous morning air in Delhi on the AQI ring, and the family's re-planned day, on frosted glass cards over a deep dawn sky with a floating tab bar](docs/screenshot.png)
 <sub>Screenshots taken with a sample forecast.</sub>
 
 ---
@@ -22,7 +22,7 @@ A GenAI-powered assistant that helps families and communities get through **seve
    - *Step 1, Where do you live?* Type a city, tap a popular city, or share location.
    - *Step 2, Who's at home?* Who is more sensitive (children, 65+, asthma/heart, pregnancy), how they get around and how far, cooking fuel, purifier, and **their usual day outdoors** (exercise, school drop-off, commute, errands, kids' play, evening walk), each with a switch and a time.
    Both are saved on the phone and never shown on the main screen again; they can be changed any time from **Settings**.
-2. **Live smog check (every open after that).** The app opens straight on the city's **live** air: the city name in small type on the animated scene, the AQI, the band and a one-line forecast ("Dangerous smog this morning. Cleaner air around 3 PM."). The scene, the buddy and the light all follow the **real reading and the city's own clock**; nobody can push the AQI up or down here.
+2. **Live smog check (every open after that).** The app opens straight on the city's **live** air: the city name in small type on the animated scene, the AQI on a ring dial, the band, how many times the WHO PM2.5 limit the air is, and a one-line forecast ("Dangerous smog this morning. Cleaner air around 3 PM."). The scene, the buddy and the light all follow the **real reading and the city's own clock**; nobody can push the AQI up or down here.
 3. **Today's plan**, recomputed whenever the reading or the household changes:
    - **Your impact if you follow this plan**: weekly CO₂ avoided, % less PM2.5 breathed during re-timed activities, activities moved indoors.
    - **Your day, re-planned**: every activity is kept, moved to a cleaner hour (with PM2.5 before → after and % less exposure) or moved indoors, plus N95 or "keep it light" notes.
@@ -35,13 +35,16 @@ A GenAI-powered assistant that helps families and communities get through **seve
 
 Live mode only ever shows the real reading. To show judges or a class how the app reacts to any air, turn on **Settings → Demo mode** (or tap *Just looking? Try the demo* on the first screen). A **Demo** badge replaces the city name on the scene, and a demo panel appears with an **AQI slider (0–500)** and a **time-of-day** picker (now, morning, afternoon, evening, night). The buddy, scene colour, headline and the whole plan follow the demo value. *Exit demo* returns to live air; the live reading itself is never changed.
 
-## Design: Apple-style, on "Glacier" liquid glass
+## Design: "Glacier" frosted glass (our own, at an Apple level of polish)
 
-- **Glacier: liquid glass you can feel.** Every section is a sheet of glass with a specular rim (light catching the top-left and bottom-right edges). Behind the glass, the page takes the scene's own light: blue at midday, peach at sunrise, amber at dusk, smog-brown when the air is bad. A floating glass **tab bar** (Air, Plan, Ask, Settings) blurs whatever scrolls under it; Settings opens as a glass **sheet** that springs up from the bottom. The buddy's line sits in a glass speech bubble, frosted by day and smoked at night.
-- **Bouncy touch.** Every button, chip, card and tab sinks under the finger and springs back with a small jelly wobble (the vertical axis trails the horizontal by 45 ms). A soft light blooms where the finger lands, and phones that support it give a short haptic tick. Selection **lenses** glide between options like a drop of glass, stretching with speed (language, tab bar, demo time of day). Switches spring across, and the demo slider's track is the AQI colour scale with a thumb that swells into a lens while dragged. All motion comes from a real damped-spring model in `spring.js` (no library), sampled into Web Animations keyframes.
-- **Glass that stays readable.** `glass.js` washes the sky colour into the backdrop only as far as text still meets WCAG AA. Text directly on the backdrop is checked as is; text on glass is checked through the palest glass tint. The tab bar is checked over pure black, and the speech bubble over every sky and skyline colour. All 24 time-of-day × smog combinations are tested, and a test checks that `styles.css` uses the same colours and tints.
-- **Respects system settings.** *Reduce transparency* makes the glass solid, *Increase contrast* swaps rims for ink outlines, *Forced colours* (Windows High Contrast) uses system colours, and *Reduce motion* keeps the light but drops the springs. Real blur is used only where something detailed scrolls underneath (tab bar, speech bubble), so scrolling stays smooth on mid-range phones.
-- **Apple-style type and controls, our own look.** The phone's own system face (SF on iPhone, Roboto on Android), a large title (*Live smog check*), an oversized thin AQI numeral, small grey section labels, iOS-style grouped lists with switches and grey value pickers, a search capsule, a Messages-style composer, and short, plain copy in English and Hindi. The scene, the buddies and the colour grade are original.
+- **One sky for the whole page.** The page takes one deep colour family for the time of day, deepening from top to bottom: dawn rose and plum in the morning, teal-blue at midday, violet and indigo at dusk, navy at night. Text is white. The animated scene has no frame; it fades straight into the page.
+- **The AQI changes only the scene.** When the reading (or the demo value) changes, only the top reacts: the scene's light and smog, the buddy, the ring and the headline. The page, the cards and the tab bar keep the time-of-day colour, so the screen below never jumps. A test checks that nothing in the app feeds the AQI into the page colours.
+- **Glacier glass.** Each card is a see-through, deeper tint of the page colour with a fine, soft frost grain, thicker towards the edges, and ice-shard (bevelled) corners. **Wipe the frost:** a finger drags a clear patch through it like a fogged window, with a thin wet edge, and it slowly fogs back. Buttons, chips, fields and the tab bar stay round. A floating glass **tab bar** (Air, Plan, Ask, Settings) blurs whatever scrolls under it, and Settings opens as a glass **sheet** from the bottom.
+- **AQI ring.** The reading sits in a 270° dial made of the six AQI band colours. The marker springs to the new value along the dial, the lit arcs fill behind it, and the number counts up. Next to it: the band and "PM2.5 at N× the WHO limit".
+- **Bouncy touch.** Every button, chip, card and tab sinks under the finger and springs back with a small jelly wobble (the vertical axis trails the horizontal by 45 ms). Phones that support it give a short haptic tick. Selection **lenses** glide between options like a drop of glass, stretching with speed (language, tab bar, demo time of day). Switches spring across, and the demo slider's track is the AQI colour scale with a thumb that swells into a lens while dragged. All motion comes from a real damped-spring model in `spring.js` (no library), sampled into Web Animations keyframes.
+- **Glass that stays readable.** Glass is see-through, so what is behind it decides whether its text can be read. `glass.js` picks, for each time of day, the lightest card tint at which every text colour still meets WCAG AA over every part of the page, through the frost and on the button film. The tab bar is checked over pure white and pure black, and the speech bubble over every sky and skyline colour. A test checks that `styles.css` uses the same colours and frost.
+- **Respects system settings.** *Reduce transparency* makes the glass solid, *Increase contrast* swaps rims for ink outlines, *Forced colours* (Windows High Contrast) uses system colours, and *Reduce motion* keeps the light but turns off the springs and the frost wipe. Real blur is used only where something detailed scrolls underneath (tab bar, speech bubble), so scrolling stays smooth on mid-range phones.
+- **Type and copy.** **Poppins**, self-hosted with its Devanagari glyphs so English and Hindi match (OFL licence in `fonts/`). Short sentence-case labels marked with a small ice diamond, iOS-style grouped lists with switches, a search capsule, a Messages-style composer, and short, plain copy in English and Hindi. The scene, the buddies, the frost and the colour grade are original.
 - **The scene is colour-graded, not decorated.** Two things set the grade, like a film colourist would: the **time of day** sets the light (pale peach sunrise from the east in the morning, clear blue overhead in the afternoon, mauve dusk with an amber horizon from the west in the evening, OLED obsidian with the city's glow at night) and the **AQI band** lays a smog film over it (clean → haze → dusty slate → smouldering brown), with subtle film grain. The headline follows the clock too ("Thick smog *this evening*", "Clear air *tonight*"). `grade.js` picks the text colour and nudges the sky until the copy passes WCAG AA; all 24 time × band combinations are tested (lowest 4.8 : 1). Live mode uses the city's local time; demo mode can preview any light.
 - **One curve instead of many boxes.** A smooth 24-hour PM2.5 curve (monotone interpolation, so no invented peaks) shows reference lines, the cleanest window and a scrubber that works with touch, mouse and arrow keys.
 - **Motion-designed buddy.** Mood changes are choreographed: parts cross-fade and slide (the N95 rises into place, the gas mask drops in), the bicycle glides in, and the body glides from its current pose to rest before the next loop starts, so there is never a jump (measured: under 4 px per frame).
@@ -75,11 +78,11 @@ All decisions are made by small, pure, unit-tested functions. The AI explains an
             │      │                 current US AQI, PM2.5, PM10, NO₂, O₃ + hourly    │
             │      │                                                                  │
             │      ├─ js/engine.js    AQI bands, risk, windows, headline, CO₂ maths   │
-            │      ├─ js/chart.js     smooth 24 h curve geometry                       │
+            │      ├─ js/chart.js     smooth 24 h curve + AQI ring geometry            │
             │      ├─ js/grade.js     time-of-day × smog colour grade, AA-checked     │
-            │      ├─ js/glass.js     liquid-glass backdrop + tints, AA-checked       │
+            │      ├─ js/glass.js     time-of-day sky, glass tints, frost, AA-checked │
             │      ├─ js/spring.js    damped-spring physics → animation keyframes     │
-            │      ├─ js/press.js     bouncy press, glass lenses, haptic tick         │
+            │      ├─ js/press.js     bouncy press, lenses, frost wipe, haptic tick   │
             │      ├─ js/flow.js      one-time setup → live screen, demo, saved place │
             │      ├─ js/routine.js   daily-routine re-planner + impact summary       │
             │      ├─ js/advice.js    26 advice rules + do/don't lists                │
@@ -93,7 +96,7 @@ All decisions are made by small, pure, unit-tested functions. The AI explains an
             └────────────────────────────────────────────────────────────────────────┘
 ```
 
-No framework, no build step, no runtime dependencies: plain ES modules served as a static site.
+No framework, no build step, no runtime dependencies: plain ES modules and a self-hosted font, served as a static site.
 
 ### Data flow
 
@@ -144,7 +147,7 @@ When should we go out today?
 git clone https://github.com/dhirajkhobragade25-droid/urban-air-assistant.git
 cd urban-air-assistant
 npm start            # serves the folder at http://localhost:8080 (python3 -m http.server)
-npm test             # 104 unit tests with node:test, no install needed
+npm test             # 111 unit tests with node:test, no install needed
 npm run coverage     # same tests with a coverage report
 npm run check        # syntax check of every module
 ```
@@ -153,7 +156,7 @@ Any static file server works (ES modules need `http://`, not `file://`).
 
 **Optional Gemini key:** open *Ask the assistant → Gemini AI settings*, paste a key from [Google AI Studio](https://aistudio.google.com/), save. Nothing else to configure; there are **no secrets in this repository**.
 
-**Deploy:** GitHub Pages → *Settings → Pages → Deploy from a branch → `main` / root*. The repo has a single branch and is about 0.5 MB.
+**Deploy:** GitHub Pages → *Settings → Pages → Deploy from a branch → `main` / root*. The repo has a single branch and is about 2 MB.
 
 ## Assumptions
 
@@ -171,8 +174,8 @@ Any static file server works (ES modules need `http://`, not `file://`).
 |---|---|
 | **Code quality** | Small single-purpose ES modules; all decisions in pure functions; views separated from the controller; JSDoc on public functions; no dependencies. |
 | **Security** | Strict Content-Security-Policy (self-hosted scripts/styles, network limited to Open-Meteo and Gemini, `base-uri`/`form-action` locked); no `innerHTML`; whitelist validation of profile, routine, coordinates, API key and model name; questions sanitised and capped at 300 characters; prompt-injection guard; the user's Gemini key stays in memory (or `sessionStorage` if they opt in) and is sent only to Google in the `x-goog-api-key` header, never in a URL; `no-referrer` policy. |
-| **Efficiency** | ~300 KB static site (~83 KB gzipped); one geocode + one air request per search; 10-minute cache; request timeouts; stale responses ignored; slider and form input coalesced to one render per animation frame; animation uses only `transform`, `opacity` and registered colour properties; the buddy's mood hand-over and every touch spring use the Web Animations API; one set of delegated listeners drives the press feel for the whole page; backdrop blur only on the two small surfaces with detail behind them. |
-| **Testing** | 104 `node:test` unit tests, 100 % line coverage of the logic modules: AQI edges, risk, forecast windows, routine re-planning (move / keep / indoors / passed hours / no forecast), editorial headline, curve geometry, colour grade contrast for every time of day and AQI band, spring physics (under-, critically and over-damped; press depth, jelly lag, lens stretch), glass contrast for every text colour over every backdrop, CSS ↔ JS colour parity, setup flow and saved-place validation (tampered storage is ignored), demo-only AQI controls, every advice rule path, CO₂ maths, prompt grounding and injection handling, Gemini error mapping, API caching and validation, storage failures, buddy rendering, and EN/HI translation parity. CI runs them on every push. |
+| **Efficiency** | ~330 KB of code (~96 KB gzipped) plus ~250 KB for four Poppins weights, of which only the two body weights are preloaded; one geocode + one air request per search; 10-minute cache; request timeouts; stale responses ignored; slider and form input coalesced to one render per animation frame; animation uses only `transform`, `opacity` and registered colour properties; the buddy's mood hand-over and every touch spring use the Web Animations API; one set of delegated listeners drives the press feel for the whole page; backdrop blur only on the two small surfaces with detail behind them. |
+| **Testing** | 111 `node:test` unit tests, 100 % line coverage of the logic modules: AQI edges, risk, forecast windows, routine re-planning (move / keep / indoors / passed hours / no forecast), editorial headline, curve and AQI ring geometry, colour grade contrast for every time of day and AQI band, spring physics (under-, critically and over-damped; press depth, jelly lag, lens stretch), glass contrast for every text colour over every part of the page through the frost, frost-wipe timing, the AQI never changing the page or card colours, CSS ↔ JS colour parity, self-hosted font and CSP, setup flow and saved-place validation (tampered storage is ignored), demo-only AQI controls, every advice rule path, CO₂ maths, prompt grounding and injection handling, Gemini error mapping, API caching and validation, storage failures, buddy rendering, and EN/HI translation parity. CI runs them on every push. |
 | **Accessibility** | Semantic landmarks and headings, labelled controls (including each time picker), skip link, visible focus, 44 px targets, status updates via `role="status"`, AQI never shown by colour alone, keyboard-operable buddy picker and collapsible groups, tab bar with `aria-current` that moves focus to the section heading, setup steps move focus to their heading, switches are real checkboxes with `role="switch"`, Settings is a native modal `<dialog>` (focus stays inside, Esc closes), Space/Enter presses get the same feedback as touch, every glass surface AA-checked, `prefers-reduced-motion`, `prefers-reduced-transparency`, `prefers-contrast` and forced colours respected, a Pause button (WCAG 2.2.2), the tab bar steps aside while the on-screen keyboard is up, full Hindi UI with correct `lang`. |
 | **Problem alignment** | Built around a family's daily routine and winter smog: low-emission routines, indoor air hacks, sustainable switches, location-specific live data and forecast, and the direct impact of every choice. |
 

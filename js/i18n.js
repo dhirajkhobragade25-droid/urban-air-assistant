@@ -382,6 +382,7 @@ const en = {
   'settings.notSet': 'Not set',
   'tab.settings': 'Settings',
   'home.choose': 'Choose your city',
+  'hero.who': 'PM2.5 at {times}× the WHO limit',
 };
 
 const hi = {
@@ -760,6 +761,7 @@ const hi = {
   'settings.notSet': 'चुना नहीं',
   'tab.settings': 'सेटिंग्स',
   'home.choose': 'अपना शहर चुनें',
+  'hero.who': 'PM2.5 WHO सीमा का {times} गुना',
 };
 
 const TABLES = Object.freeze({ en: Object.freeze(en), hi: Object.freeze(hi) });

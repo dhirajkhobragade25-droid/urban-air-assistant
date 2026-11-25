@@ -1,9 +1,16 @@
 /* ==========================================================================
    Urban Air Quality Assistant
-   Apple-style type and controls on "Glacier" liquid glass, over an
-   atmospheric colour grade. No external fonts or images; mobile first; WCAG AA;
+   "Glacier": frosted glass that reacts to the air, cut like shards of ice,
+   set in Poppins, over an atmospheric colour grade. No third-party requests for fonts or images; mobile first; WCAG AA;
    motion-safe; honours reduced transparency and higher contrast.
    ========================================================================== */
+
+/* Poppins (SIL OFL, see fonts/OFL.txt), subset to Latin + Devanagari so
+   English and Hindi share one face. */
+@font-face { font-family: "Poppins"; src: url("../fonts/poppins-300.woff") format("woff"); font-weight: 100 300; font-style: normal; font-display: swap; }
+@font-face { font-family: "Poppins"; src: url("../fonts/poppins-400.woff") format("woff"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "Poppins"; src: url("../fonts/poppins-500.woff") format("woff"); font-weight: 500 600; font-style: normal; font-display: swap; }
+@font-face { font-family: "Poppins"; src: url("../fonts/poppins-700.woff") format("woff"); font-weight: 700 900; font-style: normal; font-display: swap; }
 
 /* Registered so the scene's colour grade can transition like a film grade. */
 @property --sky-1 { syntax: '<color>'; inherits: true; initial-value: #b9d4e2; }
@@ -17,24 +24,28 @@
 @property --road { syntax: '<color>'; inherits: true; initial-value: #3f4144; }
 @property --hero-glass { syntax: '<color>'; inherits: true; initial-value: rgb(255 255 255 / 42%); }
 /* The page backdrop follows the same grade (see glass.js). */
-@property --atmo-1 { syntax: '<color>'; inherits: false; initial-value: #d4dfe6; }
-@property --atmo-2 { syntax: '<color>'; inherits: false; initial-value: #ece6da; }
-@property --atmo-3 { syntax: '<color>'; inherits: false; initial-value: #e4e8e6; }
+@property --atmo-1 { syntax: '<color>'; inherits: false; initial-value: #cfe5ff; }
+@property --atmo-2 { syntax: '<color>'; inherits: false; initial-value: #c8f0ea; }
+@property --atmo-3 { syntax: '<color>'; inherits: false; initial-value: #e2defe; }
+/* Glacier frost: 0 = clear glass, 1 = frosted over (glass.js frostFor). */
+/* The same light frost on every card at any AQI (mirrors GLASS_FROST in glass.js). */
+@property --frost { syntax: '<number>'; inherits: true; initial-value: 0.3; }
+@property --frost-tint { syntax: '<color>'; inherits: true; initial-value: rgb(255 255 255 / 8%); }
 /* Light under the finger on glass (press.js sets --px / --py). */
 @property --sheen { syntax: '<number>'; inherits: false; initial-value: 0; }
 
 :root {
-  --paper: #f3f1ec;
-  --paper-2: #e9e6de;
+  --paper: #ffffff;
+  --paper-2: #f4f5f7;
   --ink: #111;
   --ink-2: #3a362f;
-  --ink-3: #5a554c;
+  --ink-3: #4d4943;
   --rule: #cfc9bd;
   --focus: #c2410c;
-  --danger: #b42318;
-  --ok: #1d6b3e;
-  --caution: #8a5100;
-  --move: #1d4ed8;
+  --danger: #9e1c13;
+  --ok: #155831;
+  --caution: #6f4200;
+  --move: #1a44c0;
   --field-line: #757067;
 
   --band-good: #1f8a4c;
@@ -44,9 +55,8 @@
   --band-very-unhealthy: #6d3fa8;
   --band-hazardous: #5a1414;
 
-  /* The system face: SF on Apple devices, Roboto on Android, Segoe on Windows. */
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Noto Sans Devanagari", sans-serif;
-  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Noto Sans Devanagari", sans-serif;
+  --font-sans: "Poppins", "Noto Sans Devanagari", system-ui, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-display: var(--font-sans);
   --font-label: var(--font-sans);
 
   --ease-out: cubic-bezier(.16, 1, .3, 1);
@@ -55,27 +65,30 @@
   --gutter: .75rem;
 
   /* Glacier: liquid glass. The tints' palest stops mirror GLASS in glass.js. */
-  --glass-panel: 44%;
+  --glass-panel: 40%;
   --glass-tabbar: 68%;
   --radius-sheet: 28px;
   --radius-card: 18px;
   --radius-field: 14px;
   --panel-pad: 1.1rem;
   --tabbar-h: 62px;
-  --rim: linear-gradient(140deg, rgb(255 255 255 / 95%), rgb(255 255 255 / 22%) 30%, rgb(255 255 255 / 0%) 50%, rgb(255 255 255 / 20%) 72%, rgb(255 255 255 / 85%));
+  /* Ice edges: light catches the top and left faces, a cool shade sits at the base. */
   --glass-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 85%),
-    inset 0 0 16px rgb(255 255 255 / 30%),
-    inset 0 -12px 20px -16px rgb(30 34 48 / 18%),
-    0 0 0 .5px rgb(17 17 17 / 8%),
-    0 1px 2px rgb(17 17 17 / 5%),
-    0 14px 34px -14px rgb(17 24 39 / 22%);
+    inset 1px 1px 0 rgb(255 255 255 / 90%),
+    inset -1px -1px 0 rgb(255 255 255 / 45%),
+    0 0 0 .5px rgb(15 23 42 / 7%),
+    0 10px 28px -18px rgb(15 23 42 / 18%);
   --glass-shadow-sm:
-    inset 0 1px 0 rgb(255 255 255 / 90%),
-    inset 0 -1px 1px rgb(17 17 17 / 5%),
-    0 0 0 .5px rgb(17 17 17 / 12%),
+    inset 1px 1px 0 rgb(255 255 255 / 95%),
+    inset 0 -2px 0 rgb(11 92 111 / 9%),
+    0 0 0 .5px rgb(17 17 17 / 14%),
     0 1px 2px rgb(17 17 17 / 8%),
     0 6px 14px -8px rgb(17 24 39 / 30%);
+  --glacier: #0a5263;
+  /* The cut face of the ice catches a line of light (drawn along the bevel). */
+  --cut-glint: linear-gradient(225deg, rgb(255 255 255 / 0%) calc(var(--cut, 12px) * .7071 - 1px), rgb(255 255 255 / 95%) calc(var(--cut, 12px) * .7071 + .5px), rgb(255 255 255 / 0%) calc(var(--cut, 12px) * .7071 + 3px));
+  /* Frost texture: a fine, soft crystal grain (SVG noise, drawn once and tiled). */
+  --frost-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.15' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1.7 -.82'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
   --glass-fill: linear-gradient(180deg, rgb(255 255 255 / 84%), rgb(255 255 255 / 58%));
   --sheen-light: radial-gradient(150px circle at var(--px, 50%) var(--py, 50%), rgb(255 255 255 / calc(var(--sheen) * 95%)), rgb(255 255 255 / 0%) 72%);
   --ease-spring: cubic-bezier(.34, 1.56, .64, 1);
@@ -119,15 +132,16 @@ a { color: inherit; }
 .skip-link:focus { top: .5rem; }
 
 /* ---------- Page frame ---------- */
-/* The page backdrop: the scene's light, washed into the paper. Static, so
-   glass over it costs nothing to draw while scrolling. */
+/* The page backdrop: white, with a soft fusion of three colours for the time
+   of day (glass.js fusionFor). Static, so glass over it costs nothing to draw
+   while scrolling. */
 .atmosphere {
   position: fixed; inset: 0; z-index: -1; pointer-events: none;
   background:
-    radial-gradient(95% 55% at 8% -6%, var(--atmo-1), rgb(255 255 255 / 0%) 72%),
-    radial-gradient(95% 62% at 106% 48%, var(--atmo-2), rgb(255 255 255 / 0%) 70%),
-    radial-gradient(100% 55% at 18% 106%, var(--atmo-3), rgb(255 255 255 / 0%) 72%),
-    var(--paper);
+    radial-gradient(100% 64% at 0% 0%, var(--atmo-1) 12%, rgb(255 255 255 / 0%) 78%),
+    radial-gradient(90% 72% at 104% 46%, var(--atmo-2) 14%, rgb(255 255 255 / 0%) 76%),
+    radial-gradient(110% 64% at 12% 104%, var(--atmo-3) 12%, rgb(255 255 255 / 0%) 78%),
+    #ffffff;
   transition: --atmo-1 1.6s var(--ease-in-out), --atmo-2 1.6s var(--ease-in-out), --atmo-3 1.6s var(--ease-in-out);
 }
 
@@ -136,8 +150,10 @@ a { color: inherit; }
   max-width: 72rem; margin: 0 auto; padding: calc(1.1rem + env(safe-area-inset-top)) calc(var(--gutter) + .4rem) .8rem;
 }
 body[data-screen="main"] { padding-bottom: calc(var(--tabbar-h) + 28px + env(safe-area-inset-bottom)); }
-.app-title { margin: 0; font: 700 clamp(1.55rem, 7.2vw, 2.125rem)/1.1 var(--font-display); letter-spacing: -.025em; }
-body[data-screen="main"] .app-title { font-size: 2.125rem; }
+/* No title on screen: the scene says it all. The h1 stays for screen readers. */
+.app-title { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.site-header { justify-content: flex-end; }
+body[data-screen="main"] .site-header { padding-top: calc(.6rem + env(safe-area-inset-top)); padding-bottom: .2rem; }
 #lang-head .lang-btn { min-width: 42px; min-height: 36px; }
 /* Language sits in the header during setup and in Settings after that. */
 body[data-screen="main"] #lang-head { display: none; }
@@ -149,13 +165,60 @@ main:focus { outline: none; }
 
 /* Each section is a sheet of glass. */
 .panel {
-  position: relative; min-width: 0;
+  position: relative; isolation: isolate; min-width: 0;
   padding: 1.25rem var(--panel-pad) 2rem;
   border-radius: var(--radius-sheet);
-  background: linear-gradient(180deg, rgb(255 255 255 / 68%), rgb(255 255 255 / var(--glass-panel)));
+  background:
+    var(--cut-glint),
+    /* a clear-glass glint that fades as the frost builds */
+    linear-gradient(112deg, rgb(255 255 255 / 0%) 16%, rgb(255 255 255 / calc((1 - var(--frost)) * 34%)) 22%, rgb(255 255 255 / 0%) 29%),
+    linear-gradient(180deg, rgb(255 255 255 / 52%), rgb(255 255 255 / var(--glass-panel)));
   box-shadow: var(--glass-shadow);
   scroll-margin-top: 12px;
+  transition: --frost 1.8s var(--ease-in-out), --frost-tint 1.8s var(--ease-in-out);
 }
+
+/* The frost itself: it creeps in from the edges as the AQI rises, and a
+   finger wipes holes in it (press.js sets --w0 … --w7). Sits under the text. */
+:is(.panel, .sheet)::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  border-radius: inherit; corner-shape: inherit;
+  background:
+    var(--frost-grain) 0 0 / 140px 140px,
+    linear-gradient(var(--frost-tint), var(--frost-tint));
+  opacity: calc(.55 + var(--frost) * .45);
+  -webkit-mask:
+    radial-gradient(circle var(--w0, 0px at -99px -99px), transparent 55%, #000 100%),
+    radial-gradient(circle var(--w1, 0px at -99px -99px), transparent 55%, #000 100%),
+    radial-gradient(circle var(--w2, 0px at -99px -99px), transparent 55%, #000 100%),
+    radial-gradient(circle var(--w3, 0px at -99px -99px), transparent 55%, #000 100%),
+    radial-gradient(circle var(--w4, 0px at -99px -99px), transparent 55%, #000 100%),
+    radial-gradient(circle var(--w5, 0px at -99px -99px), transparent 55%, #000 100%),
+    radial-gradient(circle var(--w6, 0px at -99px -99px), transparent 55%, #000 100%),
+    radial-gradient(circle var(--w7, 0px at -99px -99px), transparent 55%, #000 100%),
+    radial-gradient(farthest-corner at 50% 42%, rgb(0 0 0 / calc(var(--frost) * 100%)) 34%, #000 92%);
+  -webkit-mask-composite: source-in;
+  mask:
+    radial-gradient(circle var(--w0, 0px at -99px -99px), transparent 55%, #000 100%),
+    radial-gradient(circle var(--w1, 0px at -99px -99px), transparent 55%, #000 100%),
+    radial-gradient(circle var(--w2, 0px at -99px -99px), transparent 55%, #000 100%),
+    radial-gradient(circle var(--w3, 0px at -99px -99px), transparent 55%, #000 100%),
+    radial-gradient(circle var(--w4, 0px at -99px -99px), transparent 55%, #000 100%),
+    radial-gradient(circle var(--w5, 0px at -99px -99px), transparent 55%, #000 100%),
+    radial-gradient(circle var(--w6, 0px at -99px -99px), transparent 55%, #000 100%),
+    radial-gradient(circle var(--w7, 0px at -99px -99px), transparent 55%, #000 100%),
+    radial-gradient(farthest-corner at 50% 42%, rgb(0 0 0 / calc(var(--frost) * 100%)) 34%, #000 92%);
+  mask-composite: intersect;
+}
+/* A wiped spot leaves a bright wet edge, like a finger drawn across a
+   cold window. Light only, so it never makes text harder to read. */
+:is(.panel, .sheet)::after {
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  border-radius: inherit; corner-shape: inherit;
+  background: radial-gradient(circle var(--wr, 0px at -99px -99px), rgb(255 255 255 / 0%) 70%, rgb(255 255 255 / 80%) 86%, rgb(255 255 255 / 0%) 100%);
+}
+/* While a finger is wiping, the frost gets its own layer so only it repaints. */
+:is(.panel, .sheet).is-wiping::before, :is(.panel, .sheet).is-wiping::after { will-change: transform; }
 .panel > h2:focus { outline: none; }
 .panel > h2:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; }
 .panel > h2 { margin-bottom: .9rem; font: 700 1.5rem/1.15 var(--font-display); letter-spacing: -.02em; }
@@ -163,7 +226,7 @@ main:focus { outline: none; }
 
 .site-footer {
   max-width: 72rem; margin: 0 auto; padding: .6rem calc(var(--gutter) + .4rem) 1rem;
-  color: var(--ink-3); font-size: .82rem;
+  color: var(--ink-2); font-size: .82rem;
 }
 
 .row { display: flex; gap: .5rem; align-items: stretch; flex-wrap: wrap; }
@@ -191,7 +254,6 @@ textarea { resize: vertical; }
   box-shadow: var(--glass-shadow-sm);
 }
 .btn-primary {
-  --rim: linear-gradient(140deg, rgb(255 255 255 / 45%), rgb(255 255 255 / 0%) 40%, rgb(255 255 255 / 0%) 60%, rgb(255 255 255 / 25%));
   color: #fff;
   background:
     radial-gradient(150px circle at var(--px, 50%) var(--py, 50%), rgb(255 255 255 / calc(var(--sheen) * 38%)), rgb(255 255 255 / 0%) 72%),
@@ -240,8 +302,13 @@ legend { padding: 0; }
 /* ---------- Apple-style grouped lists ---------- */
 .list-group { margin: 0 0 1.4rem; }
 .list-group > legend, .group-label {
-  display: block; margin: 0 0 .45rem .9rem; padding: 0;
-  font: 600 .75rem/1.3 var(--font-label); letter-spacing: .02em; text-transform: uppercase; color: var(--ink-3);
+  display: block; margin: 0 0 .5rem .35rem; padding: 0;
+  font: 600 .85rem/1.3 var(--font-label); color: var(--ink-2);
+}
+/* A small ice crystal marks every section label. */
+:is(.list-group > legend, .group-label, .step, .data-heading, .plan > section > h3, .simulator label, .phase-picker legend, .place-results > p)::before {
+  content: ""; display: inline-block; width: 7px; height: 7px; margin: 0 .5rem .1em 0; vertical-align: middle;
+  background: var(--glacier); transform: rotate(45deg); border-radius: 1px;
 }
 .list {
   border-radius: var(--radius-card); overflow: hidden;
@@ -249,8 +316,8 @@ legend { padding: 0; }
   box-shadow: 0 0 0 .5px rgb(17 17 17 / 10%), 0 1px 2px rgb(17 17 17 / 5%);
 }
 .list > * { margin: 0; padding: 0 1rem; }
-/* Hairline between rows, inset from the left like iOS lists. */
-.list > * + * { background: linear-gradient(rgb(60 60 67 / 20%), rgb(60 60 67 / 20%)) 1rem 0 / calc(100% - 1rem) 1px no-repeat; }
+/* A fine line between rows. */
+.list > * + * { background: linear-gradient(rgb(11 92 111 / 16%), rgb(11 92 111 / 16%)) 0 0 / 100% 1px no-repeat; }
 .list-row { display: flex; align-items: center; justify-content: space-between; gap: .8rem; min-height: 50px; }
 .list-row > label { margin: 0; font-weight: 400; font-size: 1rem; flex: 1 1 auto; }
 .list-row > input { flex: 0 1 11rem; width: auto; min-width: 0; text-align: right; }
@@ -260,28 +327,32 @@ legend { padding: 0; }
   -webkit-appearance: none; appearance: none; width: auto; min-width: 0; max-width: 62%; min-height: 44px;
   padding: .3rem 1.4rem .3rem .4rem; border: 0; box-shadow: none; cursor: pointer;
   color: var(--ink-3); text-align: right; text-align-last: right;
-  background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 16'%3E%3Cpath d='M3 6l3-3 3 3M3 10l3 3 3-3' fill='none' stroke='%235a554c' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") right .2rem center / 11px no-repeat;
+  background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 16'%3E%3Cpath d='M2.5 6.5l3.5 3.5 3.5-3.5' fill='none' stroke='%230a5263' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") right .2rem center / 11px no-repeat;
 }
 .list-row > select:focus, .routine-row select:focus { background-color: transparent; }
 .list-row > select:focus-visible, .routine-row select:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .group-foot { margin: .5rem .9rem 0; color: var(--ink-3); font-size: .85rem; line-height: 1.4; }
 
-/* iOS-style switch on a checkbox (role="switch"). The knob springs across. */
+/* Glacier switch: a checkbox (role="switch") whose knob is a small drop of
+   ice that springs across the track, which fills with glacier teal. */
 .switch {
   -webkit-appearance: none; appearance: none; position: relative; flex-shrink: 0;
-  width: 51px; height: 31px; margin: 0; border-radius: 999px; cursor: pointer;
-  background: rgb(120 120 128 / 22%); box-shadow: inset 0 0 0 1.5px var(--field-line);
+  width: 54px; height: 32px; margin: 0; border-radius: 999px; cursor: pointer;
+  background: rgb(118 118 128 / 14%);
+  box-shadow: inset 0 0 0 1.5px var(--field-line), inset 0 2px 4px rgb(17 17 17 / 10%);
   transition: background-color .3s ease, box-shadow .3s ease;
 }
 .switch::before {
-  content: ""; position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 999px;
-  background: #fff; box-shadow: 0 3px 8px rgb(0 0 0 / 15%), 0 1px 1px rgb(0 0 0 / 16%), 0 0 0 .5px rgb(0 0 0 / 4%);
+  content: ""; position: absolute; top: 3px; left: 3px; width: 26px; height: 26px;
+  border-radius: 999px;
+  background: radial-gradient(circle at 35% 30%, #fff 0 30%, #eef6f9 62%, #d3e6ec 100%);
+  box-shadow: inset 1px 1px 0 #fff, inset -1px -2px 3px rgb(11 92 111 / 20%), 0 2px 5px rgb(0 0 0 / 22%);
   transition: transform .5s var(--ease-spring), width .25s var(--ease-out);
 }
-.switch:checked { background: var(--ok); box-shadow: none; }
-.switch:checked::before { transform: translateX(20px); }
-.switch:active::before { width: 33px; }
-.switch:checked:active::before { transform: translateX(14px); }
+.switch:checked { background: var(--glacier); box-shadow: inset 0 2px 4px rgb(0 0 0 / 25%); }
+.switch:checked::before { transform: translateX(22px); }
+.switch:active::before { width: 31px; }
+.switch:checked:active::before { transform: translateX(17px); }
 .switch:disabled { opacity: .45; cursor: default; }
 .switch:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 
@@ -303,12 +374,12 @@ legend { padding: 0; }
 
 .quick-cities { display: flex; flex-wrap: wrap; align-items: center; gap: .45rem; margin-top: 1rem; font-size: .88rem; color: var(--ink-3); }
 .place-results { margin-top: 1rem; }
-.place-results > p { margin: 0 0 .45rem .9rem; font: 600 .75rem/1.3 var(--font-label); letter-spacing: .02em; text-transform: uppercase; color: var(--ink-3); }
+.place-results > p { margin: 0 0 .5rem .35rem; font: 600 .85rem/1.3 var(--font-label); color: var(--ink-2); }
 .place-results ul { list-style: none; padding: 0; margin: 0; display: grid; gap: .4rem; }
 .place-results button { width: 100%; text-align: left; border-radius: var(--radius-field); }
 
 /* ---------- Setup ---------- */
-.step { margin: 0 0 .35rem; font: 600 .75rem/1.3 var(--font-label); letter-spacing: .02em; text-transform: uppercase; color: var(--ink-3); }
+.step { margin: 0 0 .35rem; font: 600 .85rem/1.3 var(--font-label); color: var(--glacier); }
 .step[hidden] { display: none; }
 .setup-step > h2 { font-size: 1.85rem; }
 .search { display: grid; gap: .6rem; }
@@ -326,10 +397,12 @@ legend { padding: 0; }
   background: rgb(255 255 255 / 80%); box-shadow: var(--glass-shadow-sm); font-size: .88rem; font-weight: 600;
 }
 .setup-preview[hidden] { display: none; }
+.setup-preview { display: flex; align-items: center; gap: .5rem; }
+.setup-preview::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--swatch, var(--ink-3)); box-shadow: 0 0 8px 1px var(--swatch, transparent); }
 .setup-actions {
   position: sticky; bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 5;
   display: flex; gap: .6rem; margin-top: 1rem; padding: .5rem;
-  border-radius: 999px; background: rgb(250 249 246 / 72%);
+  border-radius: 999px; background: rgb(255 255 255 / 62%);
   -webkit-backdrop-filter: blur(18px) saturate(190%); backdrop-filter: blur(18px) saturate(190%);
   box-shadow: var(--glass-shadow);
 }
@@ -340,7 +413,7 @@ legend { padding: 0; }
 /* Text buttons, Apple style */
 .link-btn {
   min-height: 44px; padding: .4rem .2rem; border: 0; background: none; cursor: pointer;
-  color: var(--move); font: 600 1rem/1.2 var(--font-sans);
+  color: var(--glacier); font: 600 1rem/1.2 var(--font-sans); text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: .25em;
 }
 .link-btn[hidden] { display: none; }
 .link-danger { color: var(--danger); }
@@ -418,15 +491,38 @@ legend { padding: 0; }
   display: inline-flex; align-items: center; height: 22px; padding: 0 .55rem; border-radius: 999px;
   background: var(--focus); color: #fff; font: 700 .7rem/1 var(--font-sans); letter-spacing: .04em; text-transform: uppercase;
 }
-.hero-num { margin: 0; display: flex; align-items: flex-end; gap: .7rem; }
-.hero-num .num {
-  font: 200 clamp(6.2rem, 30vw, 11.5rem)/.8 var(--font-display);
-  letter-spacing: -.065em; font-feature-settings: "lnum", "tnum";
-  margin-left: -.04em;
+/* The AQI ring: six band arcs, lit up to the reading, with a glowing glass
+   marker; the number sits in the middle. */
+.hero-gauge { display: flex; align-items: center; gap: 1rem; margin: .2rem 0 .1rem; }
+.gauge { position: relative; flex-shrink: 0; width: clamp(140px, 42vw, 176px); aspect-ratio: 1; }
+.gauge-ring { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.gauge-track, .gauge-fill { fill: none; stroke-width: 10; stroke-linecap: round; }
+.gauge-track { opacity: .2; }
+.gauge-fill { filter: drop-shadow(0 0 3px rgb(255 255 255 / 35%)); }
+.gauge-fill[data-empty="true"] { opacity: 0; }
+.b0 { stroke: var(--band-good); }
+.b1 { stroke: var(--band-moderate); }
+.b2 { stroke: var(--band-sensitive); }
+.b3 { stroke: var(--band-unhealthy); }
+.b4 { stroke: var(--band-very-unhealthy); }
+.b5 { stroke: var(--band-hazardous); }
+.gauge-marker { transform-box: view-box; transform-origin: 100px 100px; }
+.gauge-glow { fill: var(--swatch); opacity: .45; filter: blur(5px); }
+.gauge-knob { fill: rgb(255 255 255 / 94%); stroke: var(--swatch); stroke-width: 4; filter: drop-shadow(0 2px 4px rgb(0 0 0 / 30%)); }
+.gauge-num { position: absolute; inset: 0; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.gauge-num .num { font: 300 clamp(2.9rem, 13.5vw, 3.7rem)/1 var(--font-display); letter-spacing: -.045em; font-feature-settings: "tnum"; }
+.gauge-num .unit { margin-top: .3rem; font: 600 .66rem/1 var(--font-label); letter-spacing: .12em; opacity: .8; }
+.hero-side { display: grid; gap: .5rem; min-width: 0; }
+/* The band as a glass pill with a glowing colour dot */
+.hero-band {
+  display: inline-flex; align-items: center; gap: .5rem; width: fit-content; margin: 0; padding: .45rem .9rem .45rem .6rem;
+  border-radius: 999px; background: var(--hero-glass);
+  -webkit-backdrop-filter: blur(10px) saturate(170%); backdrop-filter: blur(10px) saturate(170%);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 35%), 0 6px 16px -10px rgb(0 0 0 / 40%);
+  font: 600 .95rem/1.15 var(--font-sans);
 }
-.hero-num .unit { font: 500 .74rem/1 var(--font-label); letter-spacing: .02em; padding-bottom: .55rem; opacity: .82; }
-.hero-band { margin: .7rem 0 0; display: flex; align-items: center; gap: .5rem; font: 600 1rem/1.2 var(--font-sans); }
-.hero-band::before { content: ""; width: 10px; height: 10px; background: var(--swatch); outline: 1px solid currentColor; outline-offset: 1px; }
+.band-dot { flex-shrink: 0; width: 12px; height: 12px; border-radius: 50%; background: var(--swatch); box-shadow: 0 0 0 2px rgb(255 255 255 / 85%), 0 0 10px 2px var(--swatch); }
+.hero-who { margin: 0 0 0 .2rem; font: 500 .82rem/1.3 var(--font-sans); opacity: .9; }
 .hero-line { margin: .55rem 0 0; max-width: 24ch; font: 600 clamp(1.25rem, 5vw, 1.7rem)/1.22 var(--font-display); letter-spacing: -.015em; }
 .hero-line span { font-weight: 400; }
 .hero-idle { max-width: 18ch; font-size: clamp(1.6rem, 6.5vw, 2.4rem); }
@@ -441,10 +537,9 @@ legend { padding: 0; }
 
 /* The buddy's line, in a glass speech bubble over the scene */
 .caption {
-  --rim: linear-gradient(140deg, rgb(255 255 255 / 80%), rgb(255 255 255 / 10%) 35%, rgb(255 255 255 / 0%) 60%, rgb(255 255 255 / 45%));
   position: relative; z-index: 1; align-self: flex-start; margin: 1.1rem 1rem 0; max-width: 28ch;
   padding: .6rem .9rem .65rem;
-  border-radius: 18px 18px 18px 6px;
+  border-radius: 14px 14px 14px 4px;
   background: var(--hero-glass);
   -webkit-backdrop-filter: blur(10px) saturate(170%);
   backdrop-filter: blur(10px) saturate(170%);
@@ -720,7 +815,7 @@ legend { padding: 0; }
 /* Pause button on the scene (WCAG 2.2.2) */
 .stage-btn {
   position: absolute; z-index: 5; top: .8rem; right: .8rem; display: grid; place-items: center;
-  width: 40px; height: 40px; padding: 0; border: 0; border-radius: 50%; cursor: pointer; color: inherit;
+  width: 40px; height: 40px; padding: 0; border: 0; border-radius: 12px; cursor: pointer; color: inherit;
   background: var(--hero-glass);
   -webkit-backdrop-filter: blur(10px) saturate(170%); backdrop-filter: blur(10px) saturate(170%);
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 35%), 0 4px 12px -6px rgb(0 0 0 / 40%);
@@ -743,7 +838,7 @@ legend { padding: 0; }
 .readout { margin-top: 1.2rem; }
 .panel.air { padding-top: 6px; }
 
-.simulator label, .phase-picker legend { display: block; margin: 0 0 .3rem; font: 600 .75rem/1.3 var(--font-label); letter-spacing: .02em; text-transform: uppercase; color: var(--ink-3); }
+.simulator label, .phase-picker legend { display: block; margin: 0 0 .35rem; font: 600 .85rem/1.3 var(--font-label); color: var(--ink-2); }
 .simulator .row { flex-wrap: nowrap; align-items: center; }
 .simulator input[type="range"] { flex: 1 1 12rem; min-height: 44px; accent-color: var(--ink); }
 /* The slider's track is the AQI scale itself; the thumb is a drop of glass
@@ -813,19 +908,25 @@ legend { padding: 0; }
 .personal { margin: 0 0 .3rem; }
 .personal-label { font: 600 1.15rem/1.3 var(--font-sans); }
 .raised { font-size: .88rem; color: var(--ink-3); }
-.data-heading { margin: 1.6rem 0 .6rem; font: 500 .72rem/1 var(--font-label); letter-spacing: .02em; text-transform: uppercase; color: var(--ink-3); }
+.data-heading { margin: 1.6rem 0 .6rem; font: 600 .85rem/1.3 var(--font-label); color: var(--ink-2); }
 .updated { margin-top: 1rem; font: 400 .78rem/1.3 var(--font-label); color: var(--ink-3); }
 
 /* AQI scale: hairline segments with a needle */
 .aqi-scale { position: relative; margin: 1rem 0 .2rem; }
-.aqi-scale-bar { display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px; height: 4px; }
+.aqi-scale-bar { display: grid; grid-template-columns: repeat(6, 1fr); gap: 3px; height: 8px; }
+.aqi-scale-bar span { border-radius: 999px; }
 .aqi-scale-bar span:nth-child(1) { background: var(--band-good); }
 .aqi-scale-bar span:nth-child(2) { background: var(--band-moderate); }
 .aqi-scale-bar span:nth-child(3) { background: var(--band-sensitive); }
 .aqi-scale-bar span:nth-child(4) { background: var(--band-unhealthy); }
 .aqi-scale-bar span:nth-child(5) { background: var(--band-very-unhealthy); }
 .aqi-scale-bar span:nth-child(6) { background: var(--band-hazardous); }
-.aqi-marker { position: absolute; top: -6px; left: var(--pos, 0%); width: 2px; height: 16px; margin-left: -1px; background: var(--ink); transition: left .6s var(--ease-out); }
+.aqi-marker {
+  position: absolute; top: -6px; left: var(--pos, 0%); width: 20px; height: 20px; margin-left: -10px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff 0 35%, #f1f4f6 70%, #dde3e7);
+  box-shadow: 0 0 0 1.5px var(--ink), 0 3px 8px rgb(0 0 0 / 25%);
+  transition: left .9s var(--ease-spring);
+}
 .aqi-ticks { display: flex; justify-content: space-between; margin: .45rem 0 0; font: 400 .68rem/1 var(--font-label); color: var(--ink-3); }
 
 /* Forecast curve */
@@ -866,7 +967,7 @@ legend { padding: 0; }
 .routine-row select:disabled { opacity: .35; }
 
 .plan { display: grid; gap: 2.2rem; }
-.plan > section > h3, .plan-group summary h3 { font: 500 .72rem/1.2 var(--font-label); letter-spacing: .02em; text-transform: uppercase; color: var(--ink-3); }
+.plan > section > h3, .plan-group summary h3 { font: 600 .85rem/1.3 var(--font-label); color: var(--ink-2); }
 
 /* Impact: editorial stat figures */
 .impact-tiles { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); border-top: 1px solid var(--ink); }
@@ -945,15 +1046,17 @@ legend { padding: 0; }
 
 /* Message composer: a capsule with a round send button, like Messages. */
 .composer {
-  display: flex; align-items: flex-end; gap: .4rem; padding: .3rem .3rem .3rem 1rem;
-  border: 1px solid var(--field-line); border-radius: 24px; background: rgb(255 255 255 / 80%);
+  display: flex; align-items: flex-end; gap: .4rem; padding: .35rem .35rem .35rem 1rem;
+  border: 1px solid var(--field-line); border-radius: 16px; background: rgb(255 255 255 / 82%);
+  box-shadow: inset 1px 1px 0 #fff;
 }
 .composer textarea { flex: 1; min-height: 40px; max-height: 8rem; padding: .55rem 0; border: 0; background: none; box-shadow: none; resize: none; }
 .composer textarea:focus { background: none; outline: none; }
 .composer:focus-within { border-color: var(--ink); box-shadow: 0 0 0 3px rgb(17 17 17 / 12%); }
 .send-btn {
-  display: grid; place-items: center; flex-shrink: 0; width: 38px; height: 38px; padding: 0; border: 0; border-radius: 50%; cursor: pointer;
-  color: #fff; background: linear-gradient(180deg, rgb(52 52 58), rgb(14 14 16)); box-shadow: inset 0 1px 0 rgb(255 255 255 / 30%);
+  display: grid; place-items: center; flex-shrink: 0; width: 42px; height: 40px; padding: 0; border: 0; border-radius: 11px; cursor: pointer;
+  color: #fff; background: linear-gradient(160deg, #137a92, var(--glacier) 55%, #07414f);
+  box-shadow: inset 1px 1px 0 rgb(255 255 255 / 35%), 0 6px 14px -8px rgb(11 92 111 / 70%);
 }
 .send-btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
 .send-btn:disabled { opacity: .5; }
@@ -961,17 +1064,16 @@ legend { padding: 0; }
 /* Settings: a glass sheet that springs up from the bottom. */
 .sheet {
   position: fixed; inset: auto 0 0 0; width: min(100%, 560px); max-width: none; max-height: 92dvh; margin: 0 auto; padding: 0;
-  border: 0; border-radius: 28px 28px 0 0; color: var(--ink); overflow: hidden;
-  background: rgb(246 245 241 / 94%);
+  border: 0; border-radius: 26px 26px 0 0; color: var(--ink); overflow: hidden; isolation: isolate;
+  background: var(--cut-glint), rgb(255 255 255 / 90%);
   -webkit-backdrop-filter: blur(24px) saturate(180%); backdrop-filter: blur(24px) saturate(180%);
   box-shadow: 0 -12px 40px -12px rgb(17 24 39 / 35%), inset 0 1px 0 rgb(255 255 255 / 90%);
 }
 .sheet[open] { display: flex; flex-direction: column; animation: sheet-in .55s var(--ease-spring) both; }
 .sheet::backdrop { background: rgb(10 12 18 / 32%); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
-.sheet-head { position: relative; display: flex; align-items: center; justify-content: center; padding: 1.2rem 1rem .6rem; }
-.sheet-head h2 { margin: 0; font: 700 1.05rem/1.2 var(--font-display); }
-.sheet-done { position: absolute; right: 1rem; top: .75rem; }
-.grabber { position: absolute; top: 6px; left: 50%; width: 36px; height: 5px; margin-left: -18px; border-radius: 3px; background: rgb(60 60 67 / 30%); }
+.sheet-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1.3rem 1.2rem .5rem; }
+.sheet-head h2 { margin: 0; font: 700 1.4rem/1.2 var(--font-display); letter-spacing: -.01em; }
+.sheet-done { flex-shrink: 0; }
 .sheet-body { padding: .6rem 1rem calc(1.5rem + env(safe-area-inset-bottom)); overflow-y: auto; overscroll-behavior: contain; }
 .row-btn {
   display: flex; align-items: center; justify-content: space-between; gap: .8rem; width: 100%; min-height: 50px;
@@ -992,16 +1094,7 @@ legend { padding: 0; }
    Glacier: liquid glass and touch
    ========================================================================== */
 
-/* The specular rim: light catching the top-left and bottom-right edges. */
-:is(.panel, .btn, .chip, .buddy-option, .lang-switch, .tabbar, .caption, .stage, .lens)::after {
-  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
-  padding: 1px; background: var(--rim);
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-}
-.stage::after { z-index: 4; padding: 1.5px; opacity: .8; }
-.caption:empty::after { display: none; }
+
 
 /* Pressing: light blooms under the finger (press.js adds the spring). */
 :is(.btn, .chip, .buddy-option, .tab) { transition: --sheen .55s var(--ease-out), box-shadow .3s ease; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
@@ -1010,7 +1103,6 @@ legend { padding: 0; }
 
 /* A selection lens: a drop of glass that glides between options. */
 .lens {
-  --rim: linear-gradient(160deg, #fff, rgb(255 255 255 / 30%) 40%, rgb(255 255 255 / 10%) 60%, rgb(255 255 255 / 90%));
   position: absolute; z-index: 0; top: 3px; bottom: 3px; left: var(--lens-x, 0); width: var(--lens-w, 0);
   border-radius: 999px; pointer-events: none; transform-origin: 50% 50%;
   background: linear-gradient(180deg, #fff, rgb(255 255 255 / 84%));
@@ -1023,22 +1115,23 @@ legend { padding: 0; }
   position: fixed; z-index: 20; left: 50%; bottom: max(12px, env(safe-area-inset-bottom));
   display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
   width: min(calc(100% - 24px), 400px); height: var(--tabbar-h); padding: 4px;
-  border-radius: 999px; transform: translateX(-50%);
-  background: rgb(250 249 246 / var(--glass-tabbar));
-  -webkit-backdrop-filter: blur(18px) saturate(190%);
-  backdrop-filter: blur(18px) saturate(190%);
+  border-radius: 22px; transform: translateX(-50%);
+  background: rgb(255 255 255 / var(--glass-tabbar));
+  /* Clear air: a light blur. Smog: the bar frosts over. */
+  -webkit-backdrop-filter: blur(calc(10px + var(--frost) * 16px)) saturate(170%);
+  backdrop-filter: blur(calc(10px + var(--frost) * 16px)) saturate(170%);
   box-shadow: var(--glass-shadow), 0 20px 44px -18px rgb(17 24 39 / 40%);
-  transition: transform .55s var(--ease-spring), opacity .3s ease;
+  transition: transform .55s var(--ease-spring), opacity .3s ease, --frost 1.8s var(--ease-in-out);
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .tabbar { background: rgb(250 249 246 / 95%); }
+  .tabbar { background: rgb(255 255 255 / 95%); }
   .caption { background: var(--hero-glass); }
 }
 .tabbar[hidden] { display: none; }
 .tabbar .lens { top: 4px; bottom: 4px; }
 .tab {
   position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
-  min-width: 0; padding: 0; border: 0; border-radius: 999px; color: #2b2822; text-decoration: none; cursor: pointer;
+  min-width: 0; padding: 0; border: 0; border-radius: 16px; color: #2b2822; text-decoration: none; cursor: pointer;
   font: 600 .68rem/1 var(--font-sans); letter-spacing: .01em; white-space: nowrap;
   background: radial-gradient(60px circle at var(--px, 50%) var(--py, 50%), rgb(255 255 255 / calc(var(--sheen) * 90%)), rgb(255 255 255 / 0%) 75%);
 }
@@ -1076,6 +1169,34 @@ legend { padding: 0; }
 }
 
 /* ==========================================================================
+   Shapes: the big glass sheets are cut like ice (top right corner bevelled);
+   every control (buttons, chips, switches, fields, the tab bar) is softly
+   rounded. Where the browser can't draw a bevel, a mask cuts the corner.
+   ========================================================================== */
+.panel, .sheet { --cut: 26px; }
+.stage { --cut: 20px; }
+:is(.panel, .sheet, .stage) { border-top-right-radius: var(--cut); corner-top-right-shape: bevel; }
+@supports not (corner-shape: bevel) {
+  :is(.panel, .sheet, .stage) {
+    border-top-right-radius: 0;
+    -webkit-mask: linear-gradient(225deg, transparent calc(var(--cut) * .7071), #000 calc(var(--cut) * .7071 + .6px));
+    mask: linear-gradient(225deg, transparent calc(var(--cut) * .7071), #000 calc(var(--cut) * .7071 + .6px));
+  }
+}
+
+/* Rounded controls */
+.btn, .chip, .lang-switch, .lang-btn, .phase-options, .phase-option, .lens, .tabbar, .tab,
+.search-field input, .status, .setup-preview, .setup-actions, .demo-badge { border-radius: 999px; }
+.place-results button { border-radius: 16px; }
+.list, .demo-panel, .buddy-option { border-radius: 20px; }
+.composer { border-radius: 24px; }
+.send-btn, .stage-btn { border-radius: 50%; }
+.msg { border-radius: 20px; }
+.caption { border-radius: 20px 20px 20px 6px; }
+.lens { background: linear-gradient(180deg, #fff, #f3f8fa); box-shadow: 0 0 0 1.5px var(--glacier), inset 0 1px 0 #fff, 0 2px 4px rgb(17 17 17 / 10%), 0 8px 18px -8px rgb(11 92 111 / 40%); }
+.demo-panel { background: rgb(255 255 255 / 72%); }
+
+/* ==========================================================================
    Motion and colour preferences
    ========================================================================== */
 @media (prefers-reduced-motion: reduce) {
@@ -1093,9 +1214,9 @@ legend { padding: 0; }
 /* Less see-through glass when asked for (OS "reduce transparency"). */
 @media (prefers-reduced-transparency: reduce) {
   .atmosphere { display: none; }
-  .panel { background: #fbfaf7; }
-  .tabbar { background: #fbfaf7; -webkit-backdrop-filter: none; backdrop-filter: none; }
-  .caption { -webkit-backdrop-filter: none; backdrop-filter: none; background: #fbfaf7; color: var(--ink); }
+  .panel { background: #ffffff; }
+  .tabbar { background: #ffffff; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .caption { -webkit-backdrop-filter: none; backdrop-filter: none; background: #ffffff; color: var(--ink); }
   .stage[data-glass="smoked"] .caption { background: #15171d; color: #f3efe8; }
 }
 
@@ -1103,7 +1224,7 @@ legend { padding: 0; }
 @media (prefers-contrast: more) {
   .panel, .tabbar, .btn:not(.btn-primary), .chip, .buddy-option, .lang-switch, .msg-bot { background: #fff; box-shadow: 0 0 0 1px var(--ink); }
   .tabbar { -webkit-backdrop-filter: none; backdrop-filter: none; }
-  :is(.panel, .btn, .chip, .buddy-option, .lang-switch, .tabbar, .lens)::after { display: none; }
+  :is(.panel, .sheet)::before, :is(.panel, .sheet)::after { display: none; }
   .lens { box-shadow: 0 0 0 2px var(--ink); }
   input, select, textarea { border-color: var(--ink); background: #fff; }
 }
@@ -1112,9 +1233,146 @@ legend { padding: 0; }
   .hero-band::before, .aqi-scale-bar span, .bar-fill { forced-color-adjust: none; }
   .advice, .day-item, .dd-col li { border-color: CanvasText; }
   .atmosphere { display: none; }
-  :is(.panel, .btn, .chip, .buddy-option, .lang-switch, .tabbar, .caption, .stage, .lens)::after { display: none; }
+  :is(.panel, .sheet)::before, :is(.panel, .sheet)::after { display: none; }
   .panel, .tabbar, .caption, .msg { border: 1px solid CanvasText; }
   .btn, .chip, .buddy-option, .lang-switch, .phase-options { border: 1px solid ButtonText; }
   .lens { forced-color-adjust: none; background: Highlight; box-shadow: none; }
   .lang-btn[aria-pressed="true"], .phase-option:has(input:checked), .tab[aria-current] { forced-color-adjust: none; color: HighlightText; }
 }
+
+/* ==========================================================================
+   Sky theme: one deep colour family for the time of day, white text,
+   see-through glass. glass.js skyFor() sets --page-1/2/3, --card, --tab and
+   --card-deep so every text colour stays at AA (checked in the tests).
+   ========================================================================== */
+@property --page-1 { syntax: '<color>'; inherits: true; initial-value: #3a8fb3; }
+@property --page-2 { syntax: '<color>'; inherits: true; initial-value: #2c73a0; }
+@property --page-3 { syntax: '<color>'; inherits: true; initial-value: #1b4a78; }
+@property --card { syntax: '<color>'; inherits: true; initial-value: rgb(11 30 48 / 60%); }
+@property --tab { syntax: '<color>'; inherits: true; initial-value: rgb(11 30 48 / 75%); }
+@property --card-deep { syntax: '<color>'; inherits: true; initial-value: #0b1e30; }
+
+:root {
+  color-scheme: dark;
+  /* Light inks on deep colour (mirrors TEXT in glass.js). */
+  --ink: #ffffff;
+  --ink-2: #e8eef6;
+  --ink-3: #cbd6e3;
+  --danger: #ffb4a6;
+  --ok: #9ff0c0;
+  --caution: #ffd47e;
+  --move: #c0cdff;
+  --glacier: #93e6f4;
+  --focus: #ffc56b;
+  --rule: rgb(255 255 255 / 22%);
+  --field-line: rgb(255 255 255 / 55%);
+  --paper: var(--page-3);
+  --paper-2: rgb(255 255 255 / 8%);
+  /* Buttons, chips and fields: a white film (mirrors CONTROL_FILL in glass.js). */
+  --control-fill: 14%;
+  --glass-fill: linear-gradient(rgb(255 255 255 / var(--control-fill)), rgb(255 255 255 / var(--control-fill)));
+  --glass-shadow: inset 1px 1px 0 rgb(255 255 255 / 16%), inset 0 0 0 .5px rgb(255 255 255 / 10%), 0 14px 32px -20px rgb(0 0 0 / 50%);
+  --glass-shadow-sm: inset 0 1px 0 rgb(255 255 255 / 20%), 0 0 0 .5px rgb(255 255 255 / 16%), 0 6px 14px -10px rgb(0 0 0 / 45%);
+  transition: --page-1 1.6s var(--ease-in-out), --page-2 1.6s var(--ease-in-out), --page-3 1.6s var(--ease-in-out),
+    --card 1.6s var(--ease-in-out), --tab 1.6s var(--ease-in-out), --card-deep 1.6s var(--ease-in-out);
+}
+html { background: var(--page-3); }
+body { background: transparent; color: var(--ink); }
+.atmosphere { background: linear-gradient(180deg, var(--page-1) 0%, var(--page-2) 50%, var(--page-3) 100%) !important; }
+
+/* Glass cards: a deeper tint of the page colour */
+.panel, .readout { background: var(--cut-glint), var(--card); box-shadow: var(--glass-shadow); }
+.readout {
+  --cut: 26px; position: relative; margin: 1rem 0 0; padding: 1.15rem var(--panel-pad) 1.5rem;
+  border-radius: var(--radius-sheet); border-top-right-radius: var(--cut); corner-top-right-shape: bevel;
+}
+.readout:empty { display: none; }
+@supports not (corner-shape: bevel) {
+  .readout {
+    border-top-right-radius: 0;
+    -webkit-mask: linear-gradient(225deg, transparent calc(var(--cut) * .7071), #000 calc(var(--cut) * .7071 + .6px));
+    mask: linear-gradient(225deg, transparent calc(var(--cut) * .7071), #000 calc(var(--cut) * .7071 + .6px));
+  }
+}
+
+/* The scene has no frame: it runs edge to edge and fades into the page. */
+body[data-screen="main"] .site-header { padding: 0; }
+.panel.air { padding: 0; background: none; box-shadow: none; isolation: auto; }
+.panel.air::before, .panel.air::after { display: none; }
+.stage {
+  margin: 0 calc(var(--gutter) * -1); border-radius: 0; corner-top-right-shape: round;
+  -webkit-mask: none; mask: none; min-height: 590px;
+}
+.stage::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; height: 96px; pointer-events: none;
+  background: linear-gradient(180deg, rgb(0 0 0 / 0%), var(--page-1) 92%);
+}
+.stage .hero-copy { padding-top: calc(.9rem + env(safe-area-inset-top)); }
+.stage-btn { top: calc(.8rem + env(safe-area-inset-top)); }
+
+/* Controls: white film, white text */
+.btn, .chip, .buddy-option { color: var(--ink); }
+.btn-primary { color: #0d1b2a; background: radial-gradient(150px circle at var(--px, 50%) var(--py, 50%), rgb(13 27 42 / calc(var(--sheen) * 12%)), rgb(13 27 42 / 0%) 72%), #ffffff; box-shadow: 0 8px 20px -10px rgb(0 0 0 / 55%); }
+.lang-switch, .status, .setup-preview { background: rgb(255 255 255 / 14%); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+.lens { background: rgb(255 255 255 / 22%); box-shadow: 0 0 0 1.5px rgb(255 255 255 / 75%), inset 0 1px 0 rgb(255 255 255 / 35%), 0 6px 14px -8px rgb(0 0 0 / 45%); }
+.lang-switch:not(.has-lens) .lang-btn[aria-pressed="true"],
+.phase-options:not(.has-lens) .phase-option:has(input:checked),
+.tabbar:not(.has-lens) .tab[aria-current] { background: rgb(255 255 255 / 24%); box-shadow: 0 0 0 1.5px rgb(255 255 255 / 75%); }
+.phase-options { background: rgb(0 0 0 / 22%); box-shadow: inset 0 1px 3px rgb(0 0 0 / 25%); }
+.buddy-option:has(input:checked) { background: rgb(255 255 255 / 24%); box-shadow: 0 0 0 1.5px #fff; }
+
+input[type="search"], input[type="text"], input[type="password"], input[type="number"], select, textarea {
+  color: var(--ink); background: rgb(255 255 255 / 12%); box-shadow: none;
+}
+:is(input[type="search"], input[type="text"], input[type="password"], input[type="number"], select, textarea):focus { background: rgb(255 255 255 / 16%); }
+::placeholder { color: var(--ink-3); opacity: 1; }
+.search-icon { stroke: var(--ink-3); }
+.list-row > select, .routine-row select {
+  color: var(--ink-2);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 16'%3E%3Cpath d='M2.5 6.5l3.5 3.5 3.5-3.5' fill='none' stroke='%23cbd6e3' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+.list-row > select, .list-row > select:focus { background-color: transparent; }
+.routine-row select { color: var(--ink); background-color: rgb(255 255 255 / 12%); }
+.routine-row select:focus { background-color: rgb(255 255 255 / 18%); }
+select option { color: #0d1b2a; background: #ffffff; }
+
+.list { background: rgb(255 255 255 / 8%); box-shadow: 0 0 0 .5px rgb(255 255 255 / 14%); }
+.list > * + * { background: linear-gradient(rgb(255 255 255 / 14%), rgb(255 255 255 / 14%)) 0 0 / 100% 1px no-repeat; }
+.row-btn:active { background-color: rgb(255 255 255 / 10%); }
+.switch { background: rgb(255 255 255 / 12%); }
+.switch:checked { background: #1f9bb3; }
+.switch:focus-visible { outline-color: var(--focus); }
+
+.demo-panel { background: var(--card); box-shadow: 0 0 0 1.5px rgb(255 179 107 / 60%), var(--glass-shadow); }
+.demo-badge { background: #c2410c; color: #fff; }
+.setup-actions { background: var(--tab); }
+
+.tabbar { background: var(--tab); }
+.tab { color: var(--ink-2); }
+.tab[aria-current] { color: var(--ink); }
+
+.composer { background: rgb(255 255 255 / 10%); }
+.composer:focus-within { border-color: #fff; box-shadow: 0 0 0 3px rgb(255 255 255 / 18%); }
+.msg-bot { background: rgb(255 255 255 / 12%); box-shadow: inset 0 0 0 .5px rgb(255 255 255 / 16%); }
+.msg-user { color: #0d1b2a; background: #ffffff; box-shadow: 0 8px 20px -12px rgb(0 0 0 / 55%); }
+
+.sheet { background: var(--cut-glint), var(--card-deep); color: var(--ink); box-shadow: 0 -12px 40px -12px rgb(0 0 0 / 60%), inset 0 1px 0 rgb(255 255 255 / 14%); }
+
+/* Chart and bars on deep glass */
+.chart-area { fill: rgb(255 255 255 / 8%); }
+.bar-fill, .bar-guide { background: var(--ink); }
+.aqi-marker { box-shadow: 0 0 0 1.5px #fff, 0 3px 8px rgb(0 0 0 / 40%); }
+
+@media (prefers-reduced-transparency: reduce) {
+  .panel, .readout, .demo-panel, .list { background: var(--card-deep); }
+  .tabbar, .setup-actions, .status, .setup-preview, .lang-switch { background: var(--card-deep); -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
+@media (prefers-contrast: more) {
+  .panel, .readout, .tabbar, .btn:not(.btn-primary), .chip, .buddy-option, .lang-switch, .msg-bot, .list, .demo-panel {
+    background: #000; box-shadow: 0 0 0 1px #fff;
+  }
+  .panel.air { background: none; box-shadow: none; }
+  input, select, textarea { border-color: #fff; background: #000; }
+}
+/* On deep glass the frost grain reads louder, so keep it to a fine shimmer. */
+:is(.panel, .sheet)::before { opacity: calc(.22 + var(--frost) * .33); }
