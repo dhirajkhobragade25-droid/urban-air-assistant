@@ -175,11 +175,31 @@ test('styles.css mirrors the colours and glass tints the checks use', () => {
   assert.match(css, /prefers-contrast: more/);
 });
 
-test('every tab points at a section with a focusable heading', () => {
+test('every tab points at a live-screen section with a focusable heading, plus a Settings tab', () => {
   const tabs = [...html.matchAll(/class="tab" href="#([\w-]+)" data-section="([\w-]+)"/g)];
-  assert.equal(tabs.length, 5);
+  assert.deepEqual(tabs.map((t) => t[2]), ['sec-air', 'sec-plan', 'sec-ask']);
   for (const [, href, section] of tabs) {
     assert.equal(href, section);
-    assert.match(html, new RegExp(`<section class="panel[^"]*" id="${section}"[^>]*>\\s*<h2 id="[\\w-]+" tabindex="-1"`));
+    assert.match(html, new RegExp(`<section class="panel[^"]*" id="${section}"[^>]*>\\s*<h2 id="[\\w-]+"[^>]*tabindex="-1"`));
+  }
+  assert.match(html, /<button id="tab-settings" type="button" class="tab" aria-haspopup="dialog" aria-controls="settings">/);
+  assert.match(html, /<dialog id="settings" class="sheet" aria-labelledby="settings-title">/);
+});
+
+test('the AQI slider and time-of-day picker exist only inside the demo panel', () => {
+  const demo = html.slice(html.indexOf('<div id="demo-panel"'), html.indexOf('<div id="readout"'));
+  assert.match(demo, /id="sim-range"/);
+  assert.match(demo, /name="phase"/);
+  assert.equal((html.match(/id="sim-range"/g) || []).length, 1);
+  assert.equal((html.match(/name="phase"/g) || []).length, 5);
+  assert.match(html, /<div id="demo-panel" class="demo-panel" hidden>/);
+});
+
+test('every switch is a labelled checkbox with role="switch"', () => {
+  const switches = [...html.matchAll(/<input[^>]*class="switch"[^>]*>/g)].map((m) => m[0]);
+  assert.ok(switches.length >= 12, `found ${switches.length}`);
+  for (const tag of switches) {
+    assert.match(tag, /type="checkbox"/);
+    assert.match(tag, /role="switch"/);
   }
 });

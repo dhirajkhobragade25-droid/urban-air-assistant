@@ -9,6 +9,7 @@ import { forecastSeries, buildCurve } from './chart.js';
 import { describeAdvice } from './assistant.js';
 import { describeRoutineItem, formatHour } from './routine.js';
 import { formatNumber, formatClock } from './i18n.js';
+import { shortPlace } from './flow.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
@@ -39,26 +40,31 @@ export function aqiScale(aqi) {
 }
 
 /**
- * The editorial hero copy: place and time, oversized AQI numeral, band name
- * and a one-line forecast ("Thick smog now. Cleaner air around 4 PM.").
+ * The hero copy over the scene: the city in small type (or a Demo badge),
+ * the oversized AQI numeral, the band name and a one-line forecast
+ * ("Thick smog now. Cleaner air around 4 PM.").
  */
-export function heroNodes(view, T, lang, phase = 'afternoon') {
-  if (!view) {
-    return [
-      el('p', { class: 'hero-meta', text: T('app.title') }),
-      el('p', { class: 'hero-line hero-idle', text: T('hero.idle') }),
-      el('p', { class: 'hero-sub', text: T('air.empty') }),
-    ];
-  }
+export function heroNodes(view, T, lang, phase = 'afternoon', { demo = false } = {}) {
+  if (!view) return [el('p', { class: 'hero-line hero-idle', text: T('hero.idle') })];
   const { risk, snapshot, window } = view;
   const head = headlineFor({ band: risk.band, snapshot, window });
-  const when = T(`phase.${phase}`);
-  const meta = snapshot ? `${view.place} · ${when} · ${snapshot.time.slice(11, 16)}` : `${T('hero.whatIf')} · ${when}`;
   const next = head.next
     ? T(head.next.key, head.next.hour === undefined ? {} : { clock: formatClock(lang, head.next.hour), nextDay: head.next.nextDay })
     : '';
+  const place = demo || !snapshot
+    ? el('p', { class: 'hero-place' }, [
+      el('span', { class: 'demo-badge', text: T('demo.badge') }),
+      el('span', { text: T(`phase.${phase}`) }),
+    ])
+    : el('p', { class: 'hero-place' }, [
+      svg('svg', { class: 'place-icon', viewBox: '0 0 24 24', 'aria-hidden': 'true', focusable: 'false' }, [
+        svg('path', { d: 'M20.5 3.5L3.8 10.6a.5.5 0 0 0 .05.94l6.9 1.7 1.7 6.9a.5.5 0 0 0 .94.05z' }),
+      ]),
+      el('span', { class: 'place-name', text: shortPlace(view.place) }),
+      el('span', { class: 'place-time', text: snapshot.time.slice(11, 16) }),
+    ]);
   return [
-    el('p', { class: 'hero-meta', text: meta }),
+    place,
     el('p', { class: 'hero-num' }, [
       el('span', { class: 'num', text: String(view.aqi) }),
       el('span', { class: 'unit', text: T('hero.unit') }),

@@ -3,13 +3,16 @@
  * built by views.js on the page. All decisions live in the pure modules
  * (engine, advice, routine, assistant), which are unit-tested.
  */
-import { DEFAULT_PROFILE, normalizeProfile, findBestWindow } from './engine.js';
+import { DEFAULT_PROFILE, normalizeProfile, findBestWindow, categorize } from './engine.js';
 import { CATEGORIES, buildContext, buildPlan, buildDosDonts } from './advice.js';
 import { ACTIVITY_IDS, ROUTINE_HOURS, normalizeRoutine, planRoutine, summarizeImpact, formatHour } from './routine.js';
 import { createTranslator, resolveLang } from './i18n.js';
 import { PHASES, phaseForHour, gradeFor } from './grade.js';
 import { atmosphereFor, heroGlassFor } from './glass.js';
 import { enablePress, createLens } from './press.js';
+import {
+  startScreen, afterPlace, normalizeSetup, demoStartAqi, shortPlace, placeToStore, restorePlace,
+} from './flow.js';
 import { createAirClient } from './api.js';
 import { moodForLevel, quipKey, renderMascot, resolveCharacter, DEFAULT_CHARACTER } from './mascot.js';
 import {
@@ -42,12 +45,30 @@ const els = {
   phaseOptions: $('.phase-options'),
   atmosphere: $('#atmosphere'),
   themeColour: $('meta[name="theme-color"]'),
-  langSwitch: $('.lang-switch'),
+  langHead: $('#lang-head'),
+  langSettings: $('#lang-settings'),
   tabbar: $('#tabbar'),
+  tabSettings: $('#tab-settings'),
+  setup: $('#setup'),
+  home: $('#home'),
+  secPlace: $('#sec-place'),
+  secYou: $('#sec-you'),
+  placeCancel: $('#place-cancel'),
+  demoStart: $('#demo-start'),
+  setupPreview: $('#setup-preview'),
+  youBack: $('#you-back'),
+  youDone: $('#you-done'),
+  demoPanel: $('#demo-panel'),
+  demoExit: $('#demo-exit'),
+  demoToggle: $('#demo-toggle'),
+  settings: $('#settings'),
+  settingsDone: $('#settings-done'),
+  setCity: $('#set-city'),
+  setCityValue: $('#set-city-value'),
+  setHome: $('#set-home'),
   readout: $('#readout'),
   simRange: $('#sim-range'),
   simOutput: $('#sim-output'),
-  simReset: $('#sim-reset'),
   profileForm: $('#profile-form'),
   plan: $('#plan'),
   chatLog: $('#chat-log'),
@@ -77,7 +98,11 @@ const state = {
   view: null,
   mood: null,
   character: DEFAULT_CHARACTER,
-  phase: 'auto', // 'auto' follows the local time; otherwise a preview of one time of day
+  phase: 'auto', // 'auto' follows the local time; demo mode can preview any time of day
+  screen: 'setup-place', // see flow.js: setup-place → setup-you → main
+  editing: false, // true when a setup step was opened from Settings
+  setupDone: false,
+  demo: false, // demo mode: the only place where AQI and time of day can be set by hand
   quipSeed: 0,
   requestId: 0,
   paused: false,
@@ -109,7 +134,8 @@ function renderStatus() {
 /* ---------- Glass lenses and the tab bar ---------- */
 const lensOptions = { reducedMotion: prefersReducedMotion };
 const lenses = {
-  lang: createLens(els.langSwitch, () => els.langSwitch.querySelector('.lang-btn[aria-pressed="true"]'), lensOptions),
+  langHead: createLens(els.langHead, () => els.langHead.querySelector('.lang-btn[aria-pressed="true"]'), lensOptions),
+  langSettings: createLens(els.langSettings, () => els.langSettings.querySelector('.lang-btn[aria-pressed="true"]'), lensOptions),
   phase: createLens(els.phaseOptions, () => els.phaseOptions.querySelector('input:checked')?.closest('.phase-option'), lensOptions),
   tabs: createLens(els.tabbar, () => els.tabbar.querySelector('.tab[aria-current]'), lensOptions),
 };
@@ -126,6 +152,10 @@ function setActiveTab(sectionId, animate = true) {
 /** Tab tap: glide the lens, scroll to the section and move focus to its heading. */
 function onTabClick(event) {
   const tab = event.target.closest('.tab');
+  if (tab === els.tabSettings) {
+    openSettings();
+    return;
+  }
   const section = tab && document.getElementById(tab.dataset.section);
   if (!section) return;
   event.preventDefault();
@@ -143,7 +173,7 @@ function watchSections() {
     const hit = entries.find((entry) => entry.isIntersecting);
     if (hit) setActiveTab(hit.target.id);
   }, { rootMargin: '-35% 0px -60% 0px' });
-  document.querySelectorAll('main > section[id]').forEach((section) => observer.observe(section));
+  els.home.querySelectorAll(':scope > section[id]').forEach((section) => observer.observe(section));
 }
 
 function applyStaticText() {
@@ -156,7 +186,8 @@ function applyStaticText() {
     node.setAttribute('aria-label', T(node.dataset.i18nLabel, params));
   });
   document.querySelectorAll('.lang-btn').forEach((btn) => btn.setAttribute('aria-pressed', String(btn.dataset.lang === state.lang)));
-  lenses.lang.update();
+  lenses.langHead.update();
+  lenses.langSettings.update();
   lenses.tabs.update(false);
   updateMotionButton();
 }
@@ -173,7 +204,7 @@ function setLang(lang) {
 
 /* ---------- Core render ---------- */
 function computeView() {
-  const simulated = state.simulatedAqi !== null;
+  const simulated = state.demo && state.simulatedAqi !== null;
   if (!simulated && !state.live) return null;
   const snapshot = simulated ? null : state.live.snapshot;
   const aqi = simulated ? state.simulatedAqi : snapshot.aqi;
@@ -205,6 +236,19 @@ function render() {
   els.readout.replaceChildren(...readoutNodes(state.view, T, state.lang));
   renderMascotView(state.view);
   renderPlan(state.view);
+  renderSetupPreview();
+  els.setCityValue.textContent = state.live ? shortPlace(placeName(state.live.place)) : T('settings.notSet');
+}
+
+/** On the household step, a one-line reminder of the city's air ("Delhi · AQI 312 · Hazardous"). */
+function renderSetupPreview() {
+  const live = state.live;
+  els.setupPreview.hidden = !live;
+  if (!live) return;
+  const band = categorize(live.snapshot.aqi).key;
+  els.setupPreview.textContent = T('setup.preview', {
+    place: shortPlace(placeName(live.place)), aqi: live.snapshot.aqi, band: T(`band.${band}`),
+  });
 }
 
 /** Local hour of the reading (or of the device in what-if mode). */
@@ -231,7 +275,13 @@ function renderHero(view) {
   els.stage.dataset.band = band;
   els.stage.dataset.phase = grade.phase;
   els.stage.dataset.night = String(grade.phase === 'night');
-  els.heroCopy.replaceChildren(...heroNodes(view, T, state.lang, grade.phase));
+  els.heroCopy.replaceChildren(...heroNodes(view, T, state.lang, grade.phase, { demo: state.demo }));
+  if (!view) {
+    els.heroCopy.append(el('button', {
+      type: 'button', class: 'btn btn-primary hero-cta', dataset: { action: 'choose-city' }, text: T('home.choose'),
+    }));
+  }
+  els.stage.dataset.demo = String(state.demo);
 }
 
 function onPhaseChange(event) {
@@ -313,13 +363,11 @@ async function loadPlace(place) {
   const snapshot = await client.fetchAirQuality(place);
   if (id !== state.requestId) return; // a newer request won
   state.live = { place, snapshot };
-  state.simulatedAqi = null;
-  els.simRange.value = String(Math.min(snapshot.aqi, 500));
-  els.simOutput.value = String(snapshot.aqi);
-  els.simReset.hidden = true;
-  if (!place.labelKey) store.set(local, KEYS.place, { label: place.label, latitude: place.latitude, longitude: place.longitude });
-  setStatus('status.ready', { place: placeName(place) });
+  store.set(local, KEYS.place, placeToStore(place));
+  setStatus(''); // the city now shows on the scene itself
+  els.placeResults.hidden = true;
   render();
+  if (state.screen === 'setup-place') showScreen(afterPlace({ setupDone: state.setupDone, editing: state.editing }), { focus: true });
 }
 
 /** Runs a location task with the busy state and error reporting handled. */
@@ -346,6 +394,28 @@ function showPlaceChoices(places) {
   els.placeResults.hidden = places.length < 2;
 }
 
+/**
+ * Typed search lists the matches when there is more than one, so the user
+ * picks the right town; a one-tap city chip takes the first match.
+ */
+function searchPlace(query, { pickFirst = false } = {}) {
+  withLocating(els.searchBtn, async () => {
+    setStatus('status.searching');
+    const places = await client.searchPlaces(query, state.lang);
+    if (!places.length) {
+      showPlaceChoices([]);
+      setStatus('status.noPlace', {}, true);
+      return;
+    }
+    if (places.length === 1 || pickFirst) {
+      await loadPlace(places[0]);
+      return;
+    }
+    showPlaceChoices(places);
+    setStatus('');
+  });
+}
+
 function onSearch(event) {
   event.preventDefault();
   const query = els.cityInput.value.trim();
@@ -354,16 +424,7 @@ function onSearch(event) {
     els.cityInput.focus();
     return;
   }
-  withLocating(els.searchBtn, async () => {
-    setStatus('status.searching');
-    const places = await client.searchPlaces(query, state.lang);
-    showPlaceChoices(places);
-    if (!places.length) {
-      setStatus('status.noPlace', {}, true);
-      return;
-    }
-    await loadPlace(places[0]);
-  });
+  searchPlace(query);
 }
 
 function onPlaceChoice(event) {
@@ -397,29 +458,39 @@ function onQuickCity(event) {
   const chip = event.target.closest('button[data-city]');
   if (!chip) return;
   els.cityInput.value = chip.dataset.city;
-  els.searchForm.requestSubmit();
+  searchPlace(chip.dataset.city, { pickFirst: true });
 }
 
-/* ---------- "What if?" simulator ---------- */
+/* ---------- Demo mode ---------- */
+/**
+ * Demo mode is the only place where the AQI and the time of day can be set
+ * by hand. Outside it, the scene, the buddy and the plan follow the live
+ * reading and the city's own clock.
+ */
+function setDemo(on) {
+  state.demo = Boolean(on);
+  els.demoToggle.checked = state.demo;
+  els.demoPanel.hidden = !state.demo;
+  if (state.demo) {
+    const start = demoStartAqi(state.live ? state.live.snapshot.aqi : null);
+    els.simRange.value = String(start);
+    els.simOutput.value = String(start);
+    state.simulatedAqi = start;
+  } else {
+    state.simulatedAqi = null;
+    state.phase = 'auto';
+    els.phaseOptions.querySelectorAll('input[name="phase"]').forEach((input) => { input.checked = input.value === 'auto'; });
+  }
+  render();
+  lenses.phase.update(false);
+}
+
 function onSimulate() {
+  if (!state.demo) return;
   const value = Number(els.simRange.value);
   els.simOutput.value = String(value);
   state.simulatedAqi = value;
-  els.simReset.hidden = !state.live;
-  setStatus('status.simulated', { aqi: value });
   scheduleRender();
-}
-
-function onSimReset() {
-  state.simulatedAqi = null;
-  els.simReset.hidden = true;
-  if (state.live) {
-    els.simRange.value = String(Math.min(state.live.snapshot.aqi, 500));
-    els.simOutput.value = String(state.live.snapshot.aqi);
-    setStatus('status.ready', { place: placeName(state.live.place) });
-  }
-  render();
-  els.simRange.focus();
 }
 
 /* ---------- Profile & routine ---------- */
@@ -487,7 +558,59 @@ function onBuddyChange(event) {
 function updateMotionButton() {
   els.stage.classList.toggle('is-paused', state.paused);
   els.motionBtn.setAttribute('aria-pressed', String(state.paused));
-  els.motionBtn.textContent = T(state.paused ? 'mascot.play' : 'mascot.pause');
+}
+
+/* ---------- Screens and settings ---------- */
+/**
+ * Shows one screen: a setup step (first run, or opened from Settings with
+ * `editing`) or the live main screen. See flow.js for the order.
+ */
+function showScreen(screen, { editing = state.editing, focus = false } = {}) {
+  state.screen = screen;
+  state.editing = screen === 'main' ? false : editing;
+  document.body.dataset.screen = screen;
+  els.setup.hidden = screen === 'main';
+  els.secPlace.hidden = screen !== 'setup-place';
+  els.secYou.hidden = screen !== 'setup-you';
+  els.home.hidden = screen !== 'main';
+  els.tabbar.hidden = screen !== 'main';
+  els.placeCancel.hidden = !state.editing;
+  els.demoStart.hidden = state.editing; // demo lives in Settings once set up
+  els.youBack.hidden = state.editing;
+  document.querySelectorAll('.setup .step').forEach((node) => { node.hidden = state.editing; });
+  window.scrollTo(0, 0);
+  if (screen === 'main') {
+    setActiveTab('sec-air', false);
+    lenses.phase.update(false);
+  }
+  if (focus) {
+    const heading = screen === 'main' ? $('#air-heading') : $(`#${screen === 'setup-place' ? 'loc' : 'profile'}-heading`);
+    heading?.focus({ preventScroll: true });
+  }
+}
+
+function finishSetup() {
+  state.setupDone = true;
+  store.set(local, KEYS.setup, { done: true });
+  showScreen('main', { focus: true });
+}
+
+/** Opens a setup step from anywhere (Settings, or the empty scene). */
+function editStep(screen) {
+  if (els.settings.open) els.settings.close();
+  showScreen(screen, { editing: state.setupDone, focus: true });
+}
+
+function openSettings() {
+  render();
+  if (typeof els.settings.showModal === 'function') els.settings.showModal();
+  else els.settings.setAttribute('open', '');
+  lenses.langSettings.update(false);
+}
+
+function closeSettings() {
+  if (typeof els.settings.close === 'function') els.settings.close();
+  else els.settings.removeAttribute('open');
 }
 
 /* ---------- Gemini settings ---------- */
@@ -635,7 +758,24 @@ function bindEvents() {
   els.gpsBtn.addEventListener('click', onGps);
   els.quickCities.addEventListener('click', onQuickCity);
   els.simRange.addEventListener('input', onSimulate);
-  els.simReset.addEventListener('click', onSimReset);
+  els.demoToggle.addEventListener('change', () => setDemo(els.demoToggle.checked));
+  els.demoExit.addEventListener('click', () => setDemo(false));
+  els.demoStart.addEventListener('click', () => {
+    setDemo(true);
+    showScreen('main', { focus: true });
+  });
+  els.placeCancel.addEventListener('click', () => showScreen('main', { focus: true }));
+  els.youBack.addEventListener('click', () => showScreen('setup-place', { focus: true }));
+  els.youDone.addEventListener('click', finishSetup);
+  els.setCity.addEventListener('click', () => editStep('setup-place'));
+  els.setHome.addEventListener('click', () => editStep('setup-you'));
+  els.settingsDone.addEventListener('click', closeSettings);
+  els.settings.addEventListener('click', (event) => {
+    if (event.target === els.settings) closeSettings(); // a tap on the dimmed backdrop
+  });
+  els.stage.addEventListener('click', (event) => {
+    if (event.target.closest('[data-action="choose-city"]')) editStep('setup-place');
+  });
   els.profileForm.addEventListener('change', onProfileChange);
   els.profileForm.addEventListener('submit', (event) => event.preventDefault());
   els.buddyPicker.addEventListener('change', onBuddyChange);
@@ -663,20 +803,20 @@ function bindEvents() {
 function init() {
   restoreSettings();
   bindEvents();
-  setActiveTab('sec-place', false);
+  const savedPlace = restorePlace(store.get(local, KEYS.place));
+  const hasPlace = Boolean(savedPlace);
+  state.setupDone = normalizeSetup(store.get(local, KEYS.setup)).done;
+  showScreen(startScreen({ setupDone: state.setupDone, hasPlace }), { editing: false });
   applyStaticText();
-  lenses.phase.update(false);
   watchSections();
   renderAiStatus();
   render();
 
-  const lastPlace = store.get(local, KEYS.place);
-  if (lastPlace && typeof lastPlace.label === 'string') {
-    els.cityInput.value = lastPlace.label.split(',')[0];
-    withLocating(els.searchBtn, () => loadPlace({
-      label: lastPlace.label, latitude: Number(lastPlace.latitude), longitude: Number(lastPlace.longitude),
-    }));
+  if (savedPlace) {
+    if (savedPlace.label) els.cityInput.value = shortPlace(savedPlace.label);
+    withLocating(els.searchBtn, () => loadPlace(savedPlace));
   }
+
 }
 
 init();

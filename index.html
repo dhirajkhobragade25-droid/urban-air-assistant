@@ -11,56 +11,153 @@
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="css/styles.css">
 </head>
-<body>
+<body data-screen="setup-place">
   <div class="atmosphere" id="atmosphere" aria-hidden="true"></div>
   <a class="skip-link" href="#main" data-i18n="skip">Skip to main content</a>
 
   <header class="site-header">
-    <div class="brand">
-      <img src="favicon.svg" alt="" width="40" height="40">
-      <div>
-        <h1 data-i18n="app.title">Urban Air Quality Assistant</h1>
-        <p class="tagline" data-i18n="app.tagline">Live smog check, a plan made for you, and a lungs buddy who reacts.</p>
-      </div>
-    </div>
-    <div class="lang-switch" role="group" aria-labelledby="lang-label">
+    <h1 class="app-title" data-i18n="app.short">Live smog check</h1>
+    <div class="lang-switch" id="lang-head" role="group" aria-labelledby="lang-label">
       <span id="lang-label" class="visually-hidden" data-i18n="lang.label">Language</span>
       <span class="lens" aria-hidden="true" hidden></span>
-      <button type="button" class="lang-btn" data-lang="en" aria-pressed="true">EN</button>
-      <button type="button" class="lang-btn" data-lang="hi" aria-pressed="false" lang="hi">हिं</button>
+        <button type="button" class="lang-btn" data-lang="en" aria-pressed="true">EN</button>
+        <button type="button" class="lang-btn" data-lang="hi" aria-pressed="false" lang="hi">हिं</button>
     </div>
   </header>
 
   <main id="main" tabindex="-1">
     <noscript><p class="panel">This app needs JavaScript to fetch live air quality. Please enable it and reload.</p></noscript>
-    <!-- 1. Location -->
-    <section class="panel" id="sec-place" aria-labelledby="loc-heading">
-      <h2 id="loc-heading" tabindex="-1" data-i18n="loc.heading">Where are you?</h2>
-      <form id="search-form" class="search" novalidate>
-        <label for="city-input" data-i18n="loc.city">City or area</label>
-        <div class="row">
-          <input id="city-input" name="city" type="search" autocomplete="address-level2" maxlength="80" required data-i18n-placeholder="loc.placeholder" placeholder="e.g. Delhi, Kolkata, Lahore">
-          <button type="submit" class="btn btn-primary" data-i18n="loc.search">Check air</button>
-        </div>
-      </form>
-      <div class="quick-cities">
-        <span data-i18n="loc.try">Quick check:</span>
-        <button type="button" class="chip" data-city="Delhi" data-i18n="city.delhi">Delhi</button>
-        <button type="button" class="chip" data-city="Kolkata" data-i18n="city.kolkata">Kolkata</button>
-        <button type="button" class="chip" data-city="Mumbai" data-i18n="city.mumbai">Mumbai</button>
-        <button type="button" class="chip" data-city="Lucknow" data-i18n="city.lucknow">Lucknow</button>
-      </div>
-      <button id="gps-btn" type="button" class="btn btn-ghost" data-i18n="loc.gps">Use my location</button>
-      <div id="place-results" class="place-results" hidden>
-        <p id="place-results-label" data-i18n="loc.results">Choose a place:</p>
-        <ul aria-labelledby="place-results-label"></ul>
-      </div>
-      <p id="status" class="status" role="status" aria-live="polite"></p>
-    </section>
+    <p id="status" class="status" role="status" aria-live="polite"></p>
 
-    <!-- 2. Air + mascot -->
-    <section class="panel air" id="sec-air" aria-labelledby="air-heading">
-      <h2 id="air-heading" tabindex="-1" data-i18n="air.heading">Your air right now</h2>
+    <!-- One-time setup: shown on first run, and from Settings after that -->
+    <div id="setup" class="setup">
+      <section class="panel setup-step" id="sec-place" aria-labelledby="loc-heading">
+        <p class="step" data-i18n="setup.step1">Step 1 of 2</p>
+        <h2 id="loc-heading" tabindex="-1" data-i18n="loc.heading">Where do you live?</h2>
+        <p class="lede" data-i18n="setup.placeLede">We’ll check the air there every time you open the app.</p>
+        <form id="search-form" class="search" novalidate>
+          <label for="city-input" class="visually-hidden" data-i18n="loc.city">City or area</label>
+          <div class="search-field">
+            <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L20 20"/></svg>
+            <input id="city-input" name="city" type="search" autocomplete="address-level2" maxlength="80" required data-i18n-placeholder="loc.placeholder" placeholder="City or area">
+          </div>
+          <button type="submit" class="btn btn-primary btn-wide" data-i18n="loc.search">Check air</button>
+        </form>
+        <div class="quick-cities">
+          <span data-i18n="loc.try">Popular:</span>
+          <button type="button" class="chip" data-city="Delhi" data-i18n="city.delhi">Delhi</button>
+          <button type="button" class="chip" data-city="Kolkata" data-i18n="city.kolkata">Kolkata</button>
+          <button type="button" class="chip" data-city="Mumbai" data-i18n="city.mumbai">Mumbai</button>
+          <button type="button" class="chip" data-city="Lucknow" data-i18n="city.lucknow">Lucknow</button>
+        </div>
+        <button id="gps-btn" type="button" class="btn btn-ghost btn-wide btn-icon"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20.5 3.5L3.8 10.6a.5.5 0 0 0 .05.94l6.9 1.7 1.7 6.9a.5.5 0 0 0 .94.05z"/></svg><span data-i18n="loc.gps">Use my location</span></button>
+        <div id="place-results" class="place-results" hidden>
+          <p id="place-results-label" data-i18n="loc.results">Choose a place:</p>
+          <ul aria-labelledby="place-results-label"></ul>
+        </div>
+        <div class="setup-foot">
+          <button id="place-cancel" type="button" class="link-btn" data-i18n="setup.cancel" hidden>Cancel</button>
+          <button id="demo-start" type="button" class="link-btn" data-i18n="setup.demo">Just looking? Try the demo</button>
+        </div>
+      </section>
+
+      <section class="panel setup-step" id="sec-you" aria-labelledby="profile-heading" hidden>
+        <p class="step" data-i18n="setup.step2">Step 2 of 2</p>
+        <h2 id="profile-heading" tabindex="-1" data-i18n="profile.heading">Who’s at home?</h2>
+        <p id="setup-preview" class="setup-preview" hidden></p>
+        <p class="lede" data-i18n="profile.hint">This shapes your plan. It stays on this phone.</p>
+        <form id="profile-form" class="profile" novalidate>
+          <fieldset class="list-group">
+            <legend data-i18n="profile.who">More sensitive to smog</legend>
+            <div class="list">
+              <label class="check"><input class="switch" type="checkbox" role="switch" name="children"> <span data-i18n="profile.children">Children</span></label>
+              <label class="check"><input class="switch" type="checkbox" role="switch" name="elderly"> <span data-i18n="profile.elderly">Older adults (65+)</span></label>
+              <label class="check"><input class="switch" type="checkbox" role="switch" name="respiratory"> <span data-i18n="profile.respiratory">Asthma, lung or heart condition</span></label>
+              <label class="check"><input class="switch" type="checkbox" role="switch" name="pregnant"> <span data-i18n="profile.pregnant">Pregnancy</span></label>
+            </div>
+          </fieldset>
+          <fieldset class="list-group">
+            <legend data-i18n="profile.travel">Getting around and cooking</legend>
+            <div class="list">
+              <div class="list-row">
+                <label for="commute" data-i18n="profile.commute">Usual commute</label>
+                <select id="commute" name="commute">
+                  <option value="car" data-i18n="commute.car">Car</option>
+                  <option value="two_wheeler" data-i18n="commute.two_wheeler">Bike / scooter</option>
+                  <option value="public" data-i18n="commute.public">Metro / bus</option>
+                  <option value="walk_cycle" data-i18n="commute.walk_cycle">Walk / cycle</option>
+                  <option value="wfh" data-i18n="commute.wfh">Work from home</option>
+                </select>
+              </div>
+              <div class="list-row">
+                <label for="commuteKm" data-i18n="profile.km">One-way distance (km)</label>
+                <input id="commuteKm" name="commuteKm" type="number" inputmode="decimal" min="0" max="200" step="1" value="10">
+              </div>
+              <div class="list-row">
+                <label for="cooking" data-i18n="profile.cooking">Main cooking fuel</label>
+                <select id="cooking" name="cooking">
+                  <option value="lpg" data-i18n="cooking.lpg">LPG / piped gas</option>
+                  <option value="induction" data-i18n="cooking.induction">Induction / electric</option>
+                  <option value="biomass" data-i18n="cooking.biomass">Wood, coal or dung</option>
+                </select>
+              </div>
+            </div>
+          </fieldset>
+          <fieldset class="list-group">
+            <legend data-i18n="profile.habits">Habits</legend>
+            <div class="list">
+              <label class="check"><input class="switch" type="checkbox" role="switch" name="purifier"> <span data-i18n="profile.purifier">I have an air purifier</span></label>
+              <label class="check"><input class="switch" type="checkbox" role="switch" name="outdoorExercise"> <span data-i18n="profile.exercise">I exercise outdoors</span></label>
+            </div>
+          </fieldset>
+          <fieldset class="list-group routine">
+            <legend data-i18n="routine.legend">Your usual day outdoors</legend>
+            <div class="list">
+              <div class="routine-row">
+                <label for="act-outdoor-exercise" data-i18n="act.outdoor-exercise">Exercise or jog</label>
+                <select name="time-outdoor-exercise" data-activity-time="outdoor-exercise" data-i18n-label="routine.timeFor" data-i18n-activity="act.outdoor-exercise" aria-label="Time for Exercise or jog"></select>
+                <input id="act-outdoor-exercise" class="switch" type="checkbox" role="switch" name="act-outdoor-exercise" data-activity="outdoor-exercise">
+              </div>
+              <div class="routine-row">
+                <label for="act-school-run" data-i18n="act.school-run">School drop-off</label>
+                <select name="time-school-run" data-activity-time="school-run" data-i18n-label="routine.timeFor" data-i18n-activity="act.school-run" aria-label="Time for School drop-off"></select>
+                <input id="act-school-run" class="switch" type="checkbox" role="switch" name="act-school-run" data-activity="school-run">
+              </div>
+              <div class="routine-row">
+                <label for="act-commute" data-i18n="act.commute">Commute to work or college</label>
+                <select name="time-commute" data-activity-time="commute" data-i18n-label="routine.timeFor" data-i18n-activity="act.commute" aria-label="Time for Commute to work or college"></select>
+                <input id="act-commute" class="switch" type="checkbox" role="switch" name="act-commute" data-activity="commute">
+              </div>
+              <div class="routine-row">
+                <label for="act-errands" data-i18n="act.errands">Market and errands</label>
+                <select name="time-errands" data-activity-time="errands" data-i18n-label="routine.timeFor" data-i18n-activity="act.errands" aria-label="Time for Market and errands"></select>
+                <input id="act-errands" class="switch" type="checkbox" role="switch" name="act-errands" data-activity="errands">
+              </div>
+              <div class="routine-row">
+                <label for="act-kids-play" data-i18n="act.kids-play">Kids’ outdoor play</label>
+                <select name="time-kids-play" data-activity-time="kids-play" data-i18n-label="routine.timeFor" data-i18n-activity="act.kids-play" aria-label="Time for Kids’ outdoor play"></select>
+                <input id="act-kids-play" class="switch" type="checkbox" role="switch" name="act-kids-play" data-activity="kids-play">
+              </div>
+              <div class="routine-row">
+                <label for="act-evening-walk" data-i18n="act.evening-walk">Evening walk</label>
+                <select name="time-evening-walk" data-activity-time="evening-walk" data-i18n-label="routine.timeFor" data-i18n-activity="act.evening-walk" aria-label="Time for Evening walk"></select>
+                <input id="act-evening-walk" class="switch" type="checkbox" role="switch" name="act-evening-walk" data-activity="evening-walk">
+              </div>
+            </div>
+            <p class="group-foot" data-i18n="routine.hint">Turn on what your family does outside, and when. We’ll look for cleaner hours.</p>
+          </fieldset>
+        </form>
+        <div class="setup-actions">
+          <button id="you-back" type="button" class="btn btn-ghost" data-i18n="setup.back">Back</button>
+          <button id="you-done" type="button" class="btn btn-primary" data-i18n="setup.done">Done</button>
+        </div>
+      </section>
+    </div>
+
+    <!-- The live screen -->
+    <div id="home" class="home" hidden>
+      <section class="panel air" id="sec-air" aria-labelledby="air-heading">
+        <h2 id="air-heading" class="visually-hidden" tabindex="-1" data-i18n="air.heading">Air right now</h2>
       <figure id="stage" class="stage" data-mood="happy" data-character="twins" data-band="good" data-phase="afternoon" data-night="false">
           <div class="sky" aria-hidden="true">
             <div class="bloom"></div>
@@ -110,6 +207,10 @@
             <div class="grain"></div>
           </div>
 
+          <button id="motion-btn" type="button" class="stage-btn" aria-pressed="false" data-i18n-label="mascot.pause" aria-label="Pause animation">
+            <svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="7" y="5.5" width="3.4" height="13" rx="1.2"/><rect x="13.6" y="5.5" width="3.4" height="13" rx="1.2"/></svg>
+            <svg class="i-play" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8.5 5.8v12.4a1 1 0 0 0 1.5.86l9.7-6.2a1 1 0 0 0 0-1.72L10 4.94a1 1 0 0 0-1.5.86z"/></svg>
+          </button>
           <div class="hero-copy" id="hero-copy"></div>
           <p class="caption" data-role="bubble" aria-hidden="true"></p>
 
@@ -118,170 +219,62 @@
           <div class="buddy" data-buddy="tulsi"><svg class="mascot" viewBox="0 0 200 200" role="img" aria-labelledby="title-tulsi" focusable="false"><title id="title-tulsi" data-role="mascot-title">Tulsi</title><g class="m-ride"><g class="m-bike"><ellipse class="m-bike-shadow" cx="100" cy="194" rx="62" ry="3.5"/><g class="m-speed"><path d="M8 140h18M2 152h22M10 164h14"/></g><circle class="m-tyre" cx="58" cy="168" r="24"/><circle class="m-rim" cx="58" cy="168" r="20"/><g class="m-spokes"><path d="M78.0 168.0L38.0 168.0"/><path d="M72.1 182.1L43.9 153.9"/><path d="M58.0 188.0L58.0 148.0"/><path d="M43.9 182.1L72.1 153.9"/><circle class="m-hub" cx="58" cy="168" r="3"/></g><circle class="m-tyre" cx="142" cy="168" r="24"/><circle class="m-rim" cx="142" cy="168" r="20"/><g class="m-spokes"><path d="M162.0 168.0L122.0 168.0"/><path d="M156.1 182.1L127.9 153.9"/><path d="M142.0 188.0L142.0 148.0"/><path d="M127.9 182.1L156.1 153.9"/><circle class="m-hub" cx="142" cy="168" r="3"/></g><path class="m-frame" d="M58 168L98 168L86 124L58 168M86 124L130 122L98 168M130 122L142 168"/><path class="m-saddle" d="M74 119h22q4 0 1 5h-21q-4 0 -2 -5z"/><path class="m-bar" d="M130 122L125 106M121 106h13"/><g class="m-crank"><circle cx="98" cy="168" r="6"/><path d="M98 157V179M93 157h10M93 179h10"/></g></g><g class="m-seat"><g class="m-figure"><g class="t-plant t-plant-ok"><path class="t-stem" d="M100 141Q98 110 100 74"/><g transform="rotate(25 76 98)"><ellipse class="t-leaf" cx="76" cy="98" rx="24" ry="11"/><path class="t-rib" d="M55 98H97"/></g><g transform="rotate(-25 124 94)"><ellipse class="t-leaf" cx="124" cy="94" rx="24" ry="11"/><path class="t-rib" d="M103 94H145"/></g><g transform="rotate(50 90 76)"><ellipse class="t-leaf" cx="90" cy="76" rx="13" ry="7"/><path class="t-rib" d="M80 76H100"/></g><g transform="rotate(-50 110 74)"><ellipse class="t-leaf" cx="110" cy="74" rx="13" ry="7"/><path class="t-rib" d="M100 74H120"/></g><ellipse class="t-bud" cx="100" cy="64" rx="4" ry="8"/></g><g class="t-plant t-plant-droop"><path class="t-stem" d="M100 141Q103 116 98 90"/><g transform="rotate(-32 78 114)"><ellipse class="t-leaf" cx="78" cy="114" rx="22" ry="10"/><path class="t-rib" d="M59 114H97"/></g><g transform="rotate(32 121 110)"><ellipse class="t-leaf" cx="121" cy="110" rx="22" ry="10"/><path class="t-rib" d="M102 110H140"/></g><g transform="rotate(-60 91 94)"><ellipse class="t-leaf" cx="91" cy="94" rx="12" ry="6"/><path class="t-rib" d="M82 94H100"/></g><g transform="rotate(60 106 92)"><ellipse class="t-leaf" cx="106" cy="92" rx="12" ry="6"/><path class="t-rib" d="M97 92H115"/></g></g><g class="t-plant t-plant-wilt"><path class="t-stem" d="M100 141Q100 112 118 104Q134 98 138 116"/><g transform="rotate(80 139 128)"><ellipse class="t-leaf" cx="139" cy="128" rx="14" ry="7"/><path class="t-rib" d="M128 128H150"/></g><g transform="rotate(30 110 112)"><ellipse class="t-leaf" cx="110" cy="112" rx="13" ry="6"/><path class="t-rib" d="M100 112H120"/></g></g><path class="t-pot" d="M66 148Q58 186 100 188Q142 186 134 148Z"/><rect class="t-rim" x="60" y="140" width="80" height="12" rx="6"/><ellipse class="t-soil" cx="100" cy="141" rx="33" ry="4"/><g class="m-cheeks"><ellipse cx="78" cy="172" rx="6" ry="3.5"/><ellipse cx="122" cy="172" rx="6" ry="3.5"/></g><g class="m-eyes-open"><ellipse class="m-eye" cx="88" cy="162" rx="5.5" ry="6.3"/><circle class="m-pupil" cx="89" cy="163.5" r="3.0"/><circle class="m-glint" cx="90.5" cy="161" r="1.1"/><ellipse class="m-eye" cx="112" cy="162" rx="5.5" ry="6.3"/><circle class="m-pupil" cx="113" cy="163.5" r="3.0"/><circle class="m-glint" cx="114.5" cy="161" r="1.1"/></g><g class="m-eyes-happy"><path d="M82 165Q88 154 94 165"/><path d="M106 165Q112 154 118 165"/></g><g class="m-eyes-squint"><path d="M83 157L93 162L83 167"/><path d="M117 157L107 162L117 167"/></g><g class="m-eyes-x"><path d="M83 157L93 167M93 157L83 167"/><path d="M107 157L117 167M117 157L107 167"/></g><g class="m-brows"><path d="M80 151L94 145M120 151L106 145"/></g><g class="m-mouth m-mouth-smile"><path d="M93 170Q100 179.8 107 170Q100 173.15 93 170Z"/></g><g class="m-mouth m-mouth-flat"><path d="M94 174q3.0 -4 6 0t6 0"/></g><g class="m-mouth m-mouth-o"><ellipse cx="100" cy="174" rx="4" ry="5.0"/></g><g class="m-mouth m-mouth-wavy"><path d="M93 175q3.5 -5 7 0t7 0"/></g><g class="m-mask"><path class="m-mask-straps" d="M89 173L77 167M111 173L123 167"/><path class="m-mask-cup" d="M89 171Q100 164 111 171Q112 187 100 192Q88 187 89 171Z"/><path class="m-mask-seam" d="M100 167V191"/></g><g class="m-gasmask"><path class="m-gm-strap" d="M73 162H127"/><circle class="m-goggle" cx="88" cy="162" r="8"/><circle class="m-goggle" cx="112" cy="162" r="8"/><rect class="m-snout" x="90.0" y="170.5" width="20" height="13" rx="5.5"/><circle class="m-filter" cx="100" cy="177" r="3.9"/></g><path class="m-sweat" d="M142 118C137 127 137 133 142 133C147 133 147 127 142 118Z"/><g class="m-puffs"><circle class="m-puff m-puff-1" cx="84" cy="173.0" r="3.5"/><circle class="m-puff m-puff-2" cx="75" cy="168.5" r="5"/><circle class="m-puff m-puff-3" cx="63" cy="162.5" r="7"/></g></g></g></g><g class="t-fallen"><g transform="rotate(8 46 188)"><ellipse class="t-leaf" cx="46" cy="188" rx="11" ry="4"/><path class="t-rib" d="M38 188H54"/></g><g transform="rotate(-10 160 189)"><ellipse class="t-leaf" cx="160" cy="189" rx="10" ry="4"/><path class="t-rib" d="M153 189H167"/></g></g><g class="m-sparkles"><path d="M44 58Q44 64 50 64Q44 64 44 70Q44 64 38 64Q44 64 44 58Z"/><path d="M158 53Q158 58 163 58Q158 58 158 63Q158 58 153 58Q158 58 158 53Z"/></g><g class="m-dizzy"><ellipse class="m-orbit" cx="100" cy="76" rx="22" ry="6"/><g class="m-stars"><polygon points="80.0,70.0 81.6,73.8 85.7,74.1 82.6,76.8 83.5,80.9 80.0,78.7 76.5,80.9 77.4,76.8 74.3,74.1 78.4,73.8"/><polygon points="104.0,64.0 105.6,67.8 109.7,68.1 106.6,70.8 107.5,74.9 104.0,72.7 100.5,74.9 101.4,70.8 98.3,68.1 102.4,67.8"/><polygon points="120.0,72.0 121.6,75.8 125.7,76.1 122.6,78.8 123.5,82.9 120.0,80.7 116.5,82.9 117.4,78.8 114.3,76.1 118.4,75.8"/></g></g><g class="m-flag"><path class="m-pole" d="M70 142V86"/><path class="m-flag-cloth" d="M70 87L94 94L70 102Z"/></g></svg></div>
 
       </figure>
-      <div class="air-grid">
-        <div class="controls">
-        <div class="simulator">
-          <label for="sim-range" data-i18n="sim.label">What if? Try any AQI</label>
-          <div class="row">
-            <input id="sim-range" type="range" min="0" max="500" step="5" value="0" aria-describedby="sim-hint">
-            <output id="sim-output" for="sim-range" class="sim-output">0</output>
+
+        <div id="demo-panel" class="demo-panel" hidden>
+          <div class="demo-head">
+            <span class="demo-badge" data-i18n="demo.badge">Demo</span>
+            <p data-i18n="demo.hint">Set any AQI and time of day. Live readings stay as they are.</p>
           </div>
-          <p id="sim-hint" class="hint" data-i18n="sim.hint">Drag to see how your plan and your buddy react.</p>
-          <button id="sim-reset" type="button" class="btn btn-ghost" data-i18n="sim.reset" hidden>Back to live data</button>
-        </div>
-        <fieldset class="phase-picker">
-          <legend data-i18n="phase.legend">Time of day</legend>
-          <div class="phase-options">
-            <span class="lens" aria-hidden="true" hidden></span>
-            <label class="phase-option"><input type="radio" name="phase" value="auto" checked><span data-i18n="phase.auto">Auto</span></label>
-            <label class="phase-option"><input type="radio" name="phase" value="morning"><span data-i18n="phase.morning">Morning</span></label>
-            <label class="phase-option"><input type="radio" name="phase" value="afternoon"><span data-i18n="phase.afternoon">Afternoon</span></label>
-            <label class="phase-option"><input type="radio" name="phase" value="evening"><span data-i18n="phase.evening">Evening</span></label>
-            <label class="phase-option"><input type="radio" name="phase" value="night"><span data-i18n="phase.night">Night</span></label>
+          <div class="simulator">
+            <label for="sim-range" data-i18n="sim.label">AQI</label>
+            <div class="row">
+              <input id="sim-range" type="range" min="0" max="500" step="5" value="150">
+              <output id="sim-output" for="sim-range" class="sim-output">150</output>
+            </div>
           </div>
-        </fieldset>
-        <div class="stage-tools">
-          <button id="motion-btn" type="button" class="btn btn-tiny motion-btn" aria-pressed="false">Pause animation</button>
-        </div>
-        <fieldset class="buddy-picker">
-          <legend data-i18n="buddy.legend">Choose your buddy</legend>
-          <div class="buddy-options">
-            <label class="buddy-option"><input type="radio" name="buddy" value="twins" checked><span class="buddy-emoji" aria-hidden="true">🫁</span><span data-i18n="char.twins">Phephde Brothers</span></label>
-            <label class="buddy-option"><input type="radio" name="buddy" value="cloud"><span class="buddy-emoji" aria-hidden="true">☁️</span><span data-i18n="char.cloud">Badal</span></label>
-            <label class="buddy-option"><input type="radio" name="buddy" value="tulsi"><span class="buddy-emoji" aria-hidden="true">🌿</span><span data-i18n="char.tulsi">Tulsi</span></label>
-          </div>
-        </fieldset>
+          <fieldset class="phase-picker">
+            <legend data-i18n="phase.legend">Time of day</legend>
+            <div class="phase-options">
+              <span class="lens" aria-hidden="true" hidden></span>
+              <label class="phase-option"><input type="radio" name="phase" value="auto" checked><span data-i18n="phase.auto">Now</span></label>
+              <label class="phase-option"><input type="radio" name="phase" value="morning"><span data-i18n="phase.morning">Morning</span></label>
+              <label class="phase-option"><input type="radio" name="phase" value="afternoon"><span data-i18n="phase.afternoon">Afternoon</span></label>
+              <label class="phase-option"><input type="radio" name="phase" value="evening"><span data-i18n="phase.evening">Evening</span></label>
+              <label class="phase-option"><input type="radio" name="phase" value="night"><span data-i18n="phase.night">Night</span></label>
+            </div>
+          </fieldset>
+          <button id="demo-exit" type="button" class="btn btn-ghost btn-wide" data-i18n="demo.exit">Exit demo</button>
         </div>
 
-        <div id="readout" class="readout">
-          <p class="empty" data-i18n="air.empty">Search a city, use your location, or drag the “What if?” slider to begin.</p>
+        <div id="readout" class="readout"></div>
+      </section>
+
+      <section class="panel" id="sec-plan" aria-labelledby="plan-heading">
+        <h2 id="plan-heading" tabindex="-1" data-i18n="plan.heading">Today’s plan</h2>
+        <div id="plan" class="plan"></div>
+      </section>
+
+      <section class="panel" id="sec-ask" aria-labelledby="chat-heading">
+        <h2 id="chat-heading" tabindex="-1" data-i18n="chat.heading">Ask</h2>
+        <p class="lede" data-i18n="chat.intro">Ask anything about today’s air. Answers use your city’s data and your home.</p>
+        <ol id="chat-log" class="chat-log" aria-live="polite" aria-relevant="additions"></ol>
+        <div class="examples">
+          <button type="button" class="chip" data-example="chat.ex1" data-i18n="chat.ex1">Can I go for a run today?</button>
+          <button type="button" class="chip" data-example="chat.ex2" data-i18n="chat.ex2">Do I need a mask?</button>
+          <button type="button" class="chip" data-example="chat.ex3" data-i18n="chat.ex3">How do I cut smoke while cooking?</button>
+          <button type="button" class="chip" data-example="chat.ex4" data-i18n="chat.ex4">What should I avoid today?</button>
+          <button type="button" class="chip" data-example="chat.ex5" data-i18n="chat.ex5">When should we go out today?</button>
         </div>
-      </div>
-    </section>
-
-    <!-- 3. Profile -->
-    <section class="panel" id="sec-you" aria-labelledby="profile-heading">
-      <h2 id="profile-heading" tabindex="-1" data-i18n="profile.heading">About you</h2>
-      <p class="hint" data-i18n="profile.hint">Your plan updates as you change these. Saved only on this device.</p>
-      <form id="profile-form" class="profile" novalidate>
-        <fieldset>
-          <legend data-i18n="profile.who">Anyone at home who is more sensitive?</legend>
-          <label class="check"><input type="checkbox" name="children"> <span data-i18n="profile.children">Children</span></label>
-          <label class="check"><input type="checkbox" name="elderly"> <span data-i18n="profile.elderly">Older adults (65+)</span></label>
-          <label class="check"><input type="checkbox" name="respiratory"> <span data-i18n="profile.respiratory">Asthma, lung or heart condition</span></label>
-          <label class="check"><input type="checkbox" name="pregnant"> <span data-i18n="profile.pregnant">Pregnancy</span></label>
-        </fieldset>
-        <div class="field-row">
-          <div class="field">
-            <label for="commute" data-i18n="profile.commute">Usual commute</label>
-            <select id="commute" name="commute">
-              <option value="car" data-i18n="commute.car">Car</option>
-              <option value="two_wheeler" data-i18n="commute.two_wheeler">Bike / scooter</option>
-              <option value="public" data-i18n="commute.public">Metro / bus</option>
-              <option value="walk_cycle" data-i18n="commute.walk_cycle">Walk / cycle</option>
-              <option value="wfh" data-i18n="commute.wfh">Work from home</option>
-            </select>
+        <form id="chat-form" class="chat-form" novalidate>
+          <label for="chat-input" class="visually-hidden" data-i18n="chat.label">Your question</label>
+          <div class="composer">
+            <textarea id="chat-input" name="question" rows="1" maxlength="300" data-i18n-placeholder="chat.placeholder" placeholder="Ask about today’s air"></textarea>
+            <button type="submit" class="send-btn" data-i18n-label="chat.send" aria-label="Ask"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 19V5M6 11l6-6 6 6"/></svg></button>
           </div>
-          <div class="field">
-            <label for="commuteKm" data-i18n="profile.km">One-way distance (km)</label>
-            <input id="commuteKm" name="commuteKm" type="number" inputmode="decimal" min="0" max="200" step="1" value="10">
-          </div>
-          <div class="field">
-            <label for="cooking" data-i18n="profile.cooking">Main cooking fuel</label>
-            <select id="cooking" name="cooking">
-              <option value="lpg" data-i18n="cooking.lpg">LPG / piped gas</option>
-              <option value="induction" data-i18n="cooking.induction">Induction / electric</option>
-              <option value="biomass" data-i18n="cooking.biomass">Wood, coal or dung</option>
-            </select>
-          </div>
-        </div>
-        <fieldset>
-          <legend data-i18n="profile.habits">Habits</legend>
-          <label class="check"><input type="checkbox" name="purifier"> <span data-i18n="profile.purifier">I have an air purifier</span></label>
-          <label class="check"><input type="checkbox" name="outdoorExercise"> <span data-i18n="profile.exercise">I exercise outdoors</span></label>
-        </fieldset>
-        <fieldset class="routine">
-          <legend data-i18n="routine.legend">Your usual day outdoors</legend>
-          <p class="hint" data-i18n="routine.hint">Tick what your family does outside and when. We’ll look for cleaner hours.</p>
-          <div class="routine-row">
-            <label class="check"><input type="checkbox" name="act-outdoor-exercise" data-activity="outdoor-exercise"> <span data-i18n="act.outdoor-exercise">Exercise or jog</span></label>
-            <select name="time-outdoor-exercise" data-activity-time="outdoor-exercise" data-i18n-label="routine.timeFor" data-i18n-activity="act.outdoor-exercise" aria-label="Time for Exercise or jog"></select>
-          </div>
-          <div class="routine-row">
-            <label class="check"><input type="checkbox" name="act-school-run" data-activity="school-run"> <span data-i18n="act.school-run">School drop-off</span></label>
-            <select name="time-school-run" data-activity-time="school-run" data-i18n-label="routine.timeFor" data-i18n-activity="act.school-run" aria-label="Time for School drop-off"></select>
-          </div>
-          <div class="routine-row">
-            <label class="check"><input type="checkbox" name="act-commute" data-activity="commute"> <span data-i18n="act.commute">Commute to work or college</span></label>
-            <select name="time-commute" data-activity-time="commute" data-i18n-label="routine.timeFor" data-i18n-activity="act.commute" aria-label="Time for Commute to work or college"></select>
-          </div>
-          <div class="routine-row">
-            <label class="check"><input type="checkbox" name="act-errands" data-activity="errands"> <span data-i18n="act.errands">Market and errands</span></label>
-            <select name="time-errands" data-activity-time="errands" data-i18n-label="routine.timeFor" data-i18n-activity="act.errands" aria-label="Time for Market and errands"></select>
-          </div>
-          <div class="routine-row">
-            <label class="check"><input type="checkbox" name="act-kids-play" data-activity="kids-play"> <span data-i18n="act.kids-play">Kids’ outdoor play</span></label>
-            <select name="time-kids-play" data-activity-time="kids-play" data-i18n-label="routine.timeFor" data-i18n-activity="act.kids-play" aria-label="Time for Kids’ outdoor play"></select>
-          </div>
-          <div class="routine-row">
-            <label class="check"><input type="checkbox" name="act-evening-walk" data-activity="evening-walk"> <span data-i18n="act.evening-walk">Evening walk</span></label>
-            <select name="time-evening-walk" data-activity-time="evening-walk" data-i18n-label="routine.timeFor" data-i18n-activity="act.evening-walk" aria-label="Time for Evening walk"></select>
-          </div>
-        </fieldset>
-      </form>
-    </section>
-
-    <!-- 4. Plan -->
-    <section class="panel" id="sec-plan" aria-labelledby="plan-heading">
-      <h2 id="plan-heading" tabindex="-1" data-i18n="plan.heading">Your plan for today</h2>
-      <div id="plan" class="plan">
-        <p class="empty" data-i18n="plan.needData">Your plan appears here once there is an AQI to work with.</p>
-      </div>
-    </section>
-
-    <!-- 5. Assistant -->
-    <section class="panel" id="sec-ask" aria-labelledby="chat-heading">
-      <h2 id="chat-heading" tabindex="-1" data-i18n="chat.heading">Ask the assistant</h2>
-      <p class="hint" data-i18n="chat.intro">Ask anything about today’s air. Answers use your city’s data and your profile.</p>
-      <ol id="chat-log" class="chat-log" aria-live="polite" aria-relevant="additions"></ol>
-      <div class="examples">
-        <span data-i18n="chat.try">Try:</span>
-        <button type="button" class="chip" data-example="chat.ex1" data-i18n="chat.ex1">Can I go for a run today?</button>
-        <button type="button" class="chip" data-example="chat.ex2" data-i18n="chat.ex2">Do I need a mask?</button>
-        <button type="button" class="chip" data-example="chat.ex3" data-i18n="chat.ex3">How do I cut smoke while cooking?</button>
-        <button type="button" class="chip" data-example="chat.ex4" data-i18n="chat.ex4">What should I avoid today?</button>
-        <button type="button" class="chip" data-example="chat.ex5" data-i18n="chat.ex5">When should we go out today?</button>
-      </div>
-      <form id="chat-form" class="chat-form" novalidate>
-        <label for="chat-input" data-i18n="chat.label">Your question</label>
-        <div class="row">
-          <textarea id="chat-input" name="question" rows="2" maxlength="300" data-i18n-placeholder="chat.placeholder" placeholder="e.g. Can I go for a run this evening?"></textarea>
-          <button type="submit" class="btn btn-primary" data-i18n="chat.send">Ask</button>
-        </div>
-        <p id="chat-error" class="error" role="alert"></p>
-      </form>
-
-      <details class="ai-settings">
-        <summary data-i18n="ai.heading">Gemini AI settings (optional)</summary>
-        <p class="hint" data-i18n="ai.desc">Paste your own Gemini API key from Google AI Studio for AI answers.</p>
-        <form id="ai-form" novalidate>
-          <div class="field">
-            <label for="ai-key" data-i18n="ai.key">Gemini API key</label>
-            <input id="ai-key" name="apiKey" type="password" autocomplete="off" spellcheck="false" maxlength="100">
-          </div>
-          <div class="field">
-            <label for="ai-model" data-i18n="ai.model">Model</label>
-            <input id="ai-model" name="model" type="text" autocomplete="off" spellcheck="false" maxlength="60">
-          </div>
-          <label class="check"><input id="ai-remember" type="checkbox" name="remember"> <span data-i18n="ai.remember">Remember until this tab closes</span></label>
-          <div class="row">
-            <button type="submit" class="btn btn-primary" data-i18n="ai.save">Save</button>
-            <button id="ai-clear" type="button" class="btn btn-ghost" data-i18n="ai.clear">Remove key</button>
-          </div>
-          <p id="ai-status" class="status" role="status" aria-live="polite"></p>
+          <p id="chat-error" class="error" role="alert"></p>
         </form>
-      </details>
-    </section>
+      </section>
+    </div>
   </main>
 
   <footer class="site-footer">
@@ -289,13 +282,72 @@
     <p data-i18n="footer.data">Live data: Open-Meteo Air Quality API (CAMS). AI answers: Google Gemini.</p>
   </footer>
 
-  <nav class="tabbar" id="tabbar" data-i18n-label="tabs.label" aria-label="Sections">
+  <dialog id="settings" class="sheet" aria-labelledby="settings-title">
+    <div class="sheet-head">
+      <span class="grabber" aria-hidden="true"></span>
+      <h2 id="settings-title" data-i18n="settings.title">Settings</h2>
+      <button id="settings-done" type="button" class="link-btn sheet-done" data-i18n="settings.done">Done</button>
+    </div>
+    <div class="sheet-body">
+      <section class="list-group" aria-labelledby="set-you-label">
+        <h3 id="set-you-label" class="group-label" data-i18n="settings.you">Your city and home</h3>
+        <div class="list">
+          <button id="set-city" type="button" class="row-btn"><span data-i18n="settings.city">City</span><span id="set-city-value" class="row-value"></span></button>
+          <button id="set-home" type="button" class="row-btn"><span data-i18n="settings.household">Home and routine</span><span class="row-value"></span></button>
+        </div>
+      </section>
+      <section class="list-group" aria-labelledby="set-demo-label">
+        <h3 id="set-demo-label" class="group-label" data-i18n="settings.demoGroup">For demos</h3>
+        <div class="list">
+          <label class="check"><input id="demo-toggle" class="switch" type="checkbox" role="switch"> <span data-i18n="settings.demo">Demo mode</span></label>
+        </div>
+        <p class="group-foot" data-i18n="settings.demoHint">Lets you set any AQI and time of day to show how the buddy and the plan react. Turn it off to go back to live air.</p>
+      </section>
+      <section class="list-group" aria-labelledby="set-lang-label">
+        <h3 id="set-lang-label" class="group-label" data-i18n="lang.label">Language</h3>
+        <div class="lang-switch lang-wide" id="lang-settings" role="group" aria-labelledby="set-lang-label">
+          <span class="lens" aria-hidden="true" hidden></span>
+          <button type="button" class="lang-btn" data-lang="en" aria-pressed="true">English</button>
+          <button type="button" class="lang-btn" data-lang="hi" aria-pressed="false" lang="hi">हिंदी</button>
+        </div>
+      </section>
+      <fieldset class="list-group buddy-picker">
+        <legend class="group-label" data-i18n="buddy.legend">Your buddy</legend>
+        <div class="buddy-options">
+          <label class="buddy-option"><input type="radio" name="buddy" value="twins" checked><span class="buddy-emoji" aria-hidden="true">🫁</span><span data-i18n="char.twins">Phephde Brothers</span></label>
+          <label class="buddy-option"><input type="radio" name="buddy" value="cloud"><span class="buddy-emoji" aria-hidden="true">☁️</span><span data-i18n="char.cloud">Badal</span></label>
+          <label class="buddy-option"><input type="radio" name="buddy" value="tulsi"><span class="buddy-emoji" aria-hidden="true">🌿</span><span data-i18n="char.tulsi">Tulsi</span></label>
+        </div>
+      </fieldset>
+      <section class="list-group ai-settings" aria-labelledby="set-ai-label">
+        <h3 id="set-ai-label" class="group-label" data-i18n="ai.heading">Gemini AI (optional)</h3>
+        <form id="ai-form" class="list list-form" novalidate>
+          <div class="list-row">
+            <label for="ai-key" data-i18n="ai.key">API key</label>
+            <input id="ai-key" name="apiKey" type="password" autocomplete="off" spellcheck="false" maxlength="100">
+          </div>
+          <div class="list-row">
+            <label for="ai-model" data-i18n="ai.model">Model</label>
+            <input id="ai-model" name="model" type="text" autocomplete="off" spellcheck="false" maxlength="60">
+          </div>
+          <label class="check"><input id="ai-remember" class="switch" type="checkbox" role="switch" name="remember"> <span data-i18n="ai.remember">Remember until this tab closes</span></label>
+          <div class="list-actions">
+            <button id="ai-clear" type="button" class="link-btn link-danger" data-i18n="ai.clear">Remove key</button>
+            <button type="submit" class="btn btn-primary" data-i18n="ai.save">Save</button>
+          </div>
+        </form>
+        <p class="group-foot" data-i18n="ai.desc">Paste your own key from Google AI Studio for AI answers. Without it, answers come from the built-in guide.</p>
+        <p id="ai-status" class="status-line" role="status" aria-live="polite"></p>
+      </section>
+    </div>
+  </dialog>
+
+  <nav class="tabbar" id="tabbar" data-i18n-label="tabs.label" aria-label="Sections" hidden>
     <span class="lens" aria-hidden="true" hidden></span>
-    <a class="tab" href="#sec-place" data-section="sec-place" aria-current="location"><svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.6-6.5-11.2a6.5 6.5 0 0 1 13 0C18.5 15.4 12 21 12 21z"/><circle cx="12" cy="9.8" r="2.3"/></svg><span data-i18n="tab.place">Place</span></a>
-    <a class="tab" href="#sec-air" data-section="sec-air"><svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 8.5h10.5a3 3 0 1 0-3-3M3 12.5h14.5a3 3 0 1 1-3 3M3 16.5h6.5"/></svg><span data-i18n="tab.air">Air</span></a>
-    <a class="tab" href="#sec-you" data-section="sec-you"><svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="8" r="3.6"/><path d="M4.8 20.2a7.2 7.2 0 0 1 14.4 0"/></svg><span data-i18n="tab.you">You</span></a>
+    <a class="tab" href="#sec-air" data-section="sec-air" aria-current="location"><svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 8.5h10.5a3 3 0 1 0-3-3M3 12.5h14.5a3 3 0 1 1-3 3M3 16.5h6.5"/></svg><span data-i18n="tab.air">Air</span></a>
     <a class="tab" href="#sec-plan" data-section="sec-plan"><svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="4" y="5" width="16" height="15.5" rx="3.5"/><path d="M8.5 3v4M15.5 3v4M4 10h16M8 14h3.5M8 17h7"/></svg><span data-i18n="tab.plan">Plan</span></a>
     <a class="tab" href="#sec-ask" data-section="sec-ask"><svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 11.6a8 8 0 0 1-11.7 7.1L4 19.8l1.1-4A8 8 0 1 1 20 11.6z"/><path d="M8.5 11.5h.01M12 11.5h.01M15.5 11.5h.01"/></svg><span data-i18n="tab.ask">Ask</span></a>
+    <button id="tab-settings" type="button" class="tab" aria-haspopup="dialog" aria-controls="settings"><svg class="tab-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="3"/><path d="M12 2.8v2.4M12 18.8v2.4M21.2 12h-2.4M5.2 12H2.8M18.5 5.5l-1.7 1.7M7.2 16.8l-1.7 1.7M18.5 18.5l-1.7-1.7M7.2 7.2L5.5 5.5"/><circle cx="12" cy="12" r="6.4"/></svg><span data-i18n="tab.settings">Settings</span></button>
   </nav>
 
   <script type="module" src="js/app.js"></script>

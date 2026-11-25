@@ -10,6 +10,7 @@ export const KEYS = Object.freeze({
   ai: 'uaqa.ai',
   buddy: 'uaqa.buddy',
   routine: 'uaqa.routine',
+  setup: 'uaqa.setup',
 });
 
 /**
