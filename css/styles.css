@@ -444,6 +444,14 @@ legend { padding: 0; }
 
 .skyline { position: absolute; left: 0; bottom: 37px; width: 100%; height: 70px; fill: var(--skyline); }
 .skyline-far { left: -2%; width: 104%; bottom: 44px; height: 92px; fill: var(--skyline-far); animation: parallax 40s var(--ease-soft) infinite alternate; }
+/* Night: lit windows in the skyline. The strokes keep their screen size
+   however wide the skyline stretches, and a few windows switch off and on. */
+.lights { fill: none; stroke: #ffd27f; stroke-width: 2.4px; vector-effect: non-scaling-stroke; opacity: 0; transition: opacity 1.8s var(--ease-in-out); }
+.skyline-far .lights { stroke: #f3c06a; stroke-width: 1.7px; }
+.stage[data-night="true"] .lights { opacity: .92; }
+.stage[data-night="true"] .skyline-far .lights { opacity: .5; }
+.stage[data-night="true"] .tw-a { animation: window-blink 11s steps(1) infinite; }
+.stage[data-night="true"] .tw-b { animation: window-blink 15s steps(1) -6s infinite; }
 .verge { position: absolute; left: 0; right: 0; bottom: 30px; height: 7px; background: var(--verge); }
 .road { position: absolute; left: 0; right: 0; bottom: 0; height: 30px; overflow: hidden; background: var(--road); border-top: 1px solid rgb(255 255 255 / 22%); }
 .road-lines {
@@ -542,7 +550,7 @@ legend { padding: 0; }
 .kite-string { fill: none; stroke: var(--hero-ink); stroke-width: .8; opacity: .55; }
 .kite-body { transform-box: view-box; transform-origin: 30px 46px; animation: kite 3.4s var(--ease-soft) infinite alternate; }
 
-.swing, .slide { position: absolute; bottom: 34px; width: 22%; max-width: 104px; overflow: visible; }
+.swing, .slide { position: absolute; bottom: 34px; width: 22%; max-width: 104px; overflow: visible; transition: opacity 1.2s var(--ease-in-out); }
 .swing { left: 2%; }
 .slide { right: 2%; }
 .pg-frame { fill: none; stroke: var(--skyline); stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; }
@@ -570,8 +578,8 @@ legend { padding: 0; }
 [data-mood="happy"] .pg-kid, [data-mood="meh"] .pg-kid { opacity: 1; }
 [data-mood="happy"] .sw-seat, [data-mood="meh"] .sw-seat { animation: swing 2.2s var(--ease-soft) infinite alternate; }
 [data-mood="happy"] .sl-kid, [data-mood="meh"] .sl-kid { animation: slide-down 4.2s var(--ease-in-out) infinite; }
-/* Everyone goes home at night. */
-.stage[data-night="true"] :is(.flock, .kite, .pg-kid) { opacity: 0; }
+/* Everyone goes home at night, and the playground is put away. */
+.stage[data-night="true"] :is(.flock, .kite, .pg-kid, .swing, .slide) { opacity: 0; }
 
 /* ==========================================================================
    Buddies: colours, parts and motion
@@ -774,6 +782,7 @@ legend { padding: 0; }
 @keyframes bloom-breathe { from { transform: translate(-50%, -50%) scale(1); } to { transform: translate(-54%, -48%) scale(1.08); } }
 @keyframes haze-drift { from { transform: translateX(-2%); } to { transform: translateX(2%); } }
 @keyframes parallax { from { transform: translateX(-1.5%); } to { transform: translateX(1.5%); } }
+@keyframes window-blink { 0%, 100% { stroke-opacity: 1; } 46% { stroke-opacity: .12; } 71% { stroke-opacity: 1; } }
 @keyframes grain {
   0% { transform: translate(0, 0); } 20% { transform: translate(-6%, 4%); } 40% { transform: translate(5%, -6%); }
   60% { transform: translate(-3%, -2%); } 80% { transform: translate(6%, 5%); } 100% { transform: translate(0, 0); }
