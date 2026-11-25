@@ -4,8 +4,7 @@
  * The whole page takes one colour family for the time of day (a dawn rose,
  * a midday teal-blue, a dusk violet, a night navy), deepening from top to
  * bottom. The hero scene fades into it. Cards are a deeper tint of the same
- * colour with a light frost, and text on them is white; a finger wipes the
- * frost away like a fogged window, and it slowly fogs back.
+ * colour with a light frost, and text on them is white.
  *
  * Only the scene at the top reacts to the AQI. The page, the cards and the
  * frost depend on the time of day alone, so the reading never shifts them.
@@ -19,8 +18,6 @@
  */
 import { mix, contrastRatio, MIN_CONTRAST, INK_DARK } from './grade.js';
 
-const clamp01 = (n) => Math.min(Math.max(n, 0), 1);
-const round3 = (n) => Math.round(n * 1000) / 1000;
 const rgbOf = (hex) => [1, 3, 5].map((i) => Number.parseInt(hex.slice(i, i + 2), 16));
 const cssRgb = (hex, alpha) => {
   const [r, g, b] = rgbOf(hex);
@@ -122,29 +119,4 @@ export function heroGlassFor(ink) {
   const glass = HERO_GLASS[tone];
   const [r, g, b] = [1, 3, 5].map((i) => Number.parseInt(glass.colour.slice(i, i + 2), 16));
   return { tone, ...glass, css: `rgb(${r} ${g} ${b} / ${Math.round(glass.alpha * 100)}%)` };
-}
-
-/* ---------- Wiping the frost ---------- */
-
-/** A finger-sized wipe (CSS px) and its timing in seconds: grow, stay clear, fog back. */
-export const WIPE = Object.freeze({ radius: 38, grow: 0.14, hold: 0.45, fade: 2.6 });
-
-/** When a wiped spot starts fogging back, given when the finger lifted (seconds after the touch). */
-const fadeStart = (releasedAfter, w) => Math.max(releasedAfter, w.grow) + w.hold;
-
-/**
- * Radius of a wiped spot `age` seconds after the touch. `releasedAfter` is
- * how long the finger stayed down, or null while it still is.
- */
-export function wipeRadius(age, releasedAfter = null, w = WIPE) {
-  if (!(age > 0)) return 0;
-  const grow = 1 - (1 - Math.min(age / w.grow, 1)) ** 3;
-  if (releasedAfter === null || age <= fadeStart(releasedAfter, w)) return round3(w.radius * grow);
-  const t = clamp01((age - fadeStart(releasedAfter, w)) / w.fade);
-  return round3(w.radius * grow * (1 - t * t * (3 - 2 * t)));
-}
-
-/** True once a released spot has fogged over completely. */
-export function wipeDone(age, releasedAfter, w = WIPE) {
-  return releasedAfter !== null && age >= fadeStart(releasedAfter, w) + w.fade;
 }

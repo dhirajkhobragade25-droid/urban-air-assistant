@@ -1,6 +1,6 @@
 /* ==========================================================================
    Urban Air Quality Assistant
-   "Glacier": frosted glass that reacts to the air, cut like shards of ice,
+   "Glacier": deep frosted glass in the colour of the hour, cut like shards of ice,
    set in Poppins, over an atmospheric colour grade. No third-party requests for fonts or images; mobile first; WCAG AA;
    motion-safe; honours reduced transparency and higher contrast.
    ========================================================================== */
@@ -27,7 +27,6 @@
 @property --atmo-1 { syntax: '<color>'; inherits: false; initial-value: #cfe5ff; }
 @property --atmo-2 { syntax: '<color>'; inherits: false; initial-value: #c8f0ea; }
 @property --atmo-3 { syntax: '<color>'; inherits: false; initial-value: #e2defe; }
-/* Glacier frost: 0 = clear glass, 1 = frosted over (glass.js frostFor). */
 /* The same light frost on every card at any AQI (mirrors GLASS_FROST in glass.js). */
 @property --frost { syntax: '<number>'; inherits: true; initial-value: 0.3; }
 @property --frost-tint { syntax: '<color>'; inherits: true; initial-value: rgb(255 255 255 / 8%); }
@@ -170,55 +169,27 @@ main:focus { outline: none; }
   border-radius: var(--radius-sheet);
   background:
     var(--cut-glint),
-    /* a clear-glass glint that fades as the frost builds */
+    /* a clear-glass glint across the sheet */
     linear-gradient(112deg, rgb(255 255 255 / 0%) 16%, rgb(255 255 255 / calc((1 - var(--frost)) * 34%)) 22%, rgb(255 255 255 / 0%) 29%),
     linear-gradient(180deg, rgb(255 255 255 / 52%), rgb(255 255 255 / var(--glass-panel)));
   box-shadow: var(--glass-shadow);
   scroll-margin-top: 12px;
-  transition: --frost 1.8s var(--ease-in-out), --frost-tint 1.8s var(--ease-in-out);
 }
 
-/* The frost itself: it creeps in from the edges as the AQI rises, and a
-   finger wipes holes in it (press.js sets --w0 … --w7). Sits under the text. */
+/* The frost itself: the same light film at any AQI, thicker at the edges.
+   Sits under the text. On deep glass the grain reads louder, so it stays a fine shimmer. */
 :is(.panel, .sheet)::before {
   content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
   border-radius: inherit; corner-shape: inherit;
   background:
     var(--frost-grain) 0 0 / 140px 140px,
     linear-gradient(var(--frost-tint), var(--frost-tint));
-  opacity: calc(.55 + var(--frost) * .45);
+  opacity: calc(.22 + var(--frost) * .33);
   -webkit-mask:
-    radial-gradient(circle var(--w0, 0px at -99px -99px), transparent 55%, #000 100%),
-    radial-gradient(circle var(--w1, 0px at -99px -99px), transparent 55%, #000 100%),
-    radial-gradient(circle var(--w2, 0px at -99px -99px), transparent 55%, #000 100%),
-    radial-gradient(circle var(--w3, 0px at -99px -99px), transparent 55%, #000 100%),
-    radial-gradient(circle var(--w4, 0px at -99px -99px), transparent 55%, #000 100%),
-    radial-gradient(circle var(--w5, 0px at -99px -99px), transparent 55%, #000 100%),
-    radial-gradient(circle var(--w6, 0px at -99px -99px), transparent 55%, #000 100%),
-    radial-gradient(circle var(--w7, 0px at -99px -99px), transparent 55%, #000 100%),
     radial-gradient(farthest-corner at 50% 42%, rgb(0 0 0 / calc(var(--frost) * 100%)) 34%, #000 92%);
-  -webkit-mask-composite: source-in;
   mask:
-    radial-gradient(circle var(--w0, 0px at -99px -99px), transparent 55%, #000 100%),
-    radial-gradient(circle var(--w1, 0px at -99px -99px), transparent 55%, #000 100%),
-    radial-gradient(circle var(--w2, 0px at -99px -99px), transparent 55%, #000 100%),
-    radial-gradient(circle var(--w3, 0px at -99px -99px), transparent 55%, #000 100%),
-    radial-gradient(circle var(--w4, 0px at -99px -99px), transparent 55%, #000 100%),
-    radial-gradient(circle var(--w5, 0px at -99px -99px), transparent 55%, #000 100%),
-    radial-gradient(circle var(--w6, 0px at -99px -99px), transparent 55%, #000 100%),
-    radial-gradient(circle var(--w7, 0px at -99px -99px), transparent 55%, #000 100%),
     radial-gradient(farthest-corner at 50% 42%, rgb(0 0 0 / calc(var(--frost) * 100%)) 34%, #000 92%);
-  mask-composite: intersect;
 }
-/* A wiped spot leaves a bright wet edge, like a finger drawn across a
-   cold window. Light only, so it never makes text harder to read. */
-:is(.panel, .sheet)::after {
-  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
-  border-radius: inherit; corner-shape: inherit;
-  background: radial-gradient(circle var(--wr, 0px at -99px -99px), rgb(255 255 255 / 0%) 70%, rgb(255 255 255 / 80%) 86%, rgb(255 255 255 / 0%) 100%);
-}
-/* While a finger is wiping, the frost gets its own layer so only it repaints. */
-:is(.panel, .sheet).is-wiping::before, :is(.panel, .sheet).is-wiping::after { will-change: transform; }
 .panel > h2:focus { outline: none; }
 .panel > h2:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; }
 .panel > h2 { margin-bottom: .9rem; font: 700 1.5rem/1.15 var(--font-display); letter-spacing: -.02em; }
@@ -1117,11 +1088,11 @@ legend { padding: 0; }
   width: min(calc(100% - 24px), 400px); height: var(--tabbar-h); padding: 4px;
   border-radius: 22px; transform: translateX(-50%);
   background: rgb(255 255 255 / var(--glass-tabbar));
-  /* Clear air: a light blur. Smog: the bar frosts over. */
+  /* A soft blur of whatever scrolls underneath. */
   -webkit-backdrop-filter: blur(calc(10px + var(--frost) * 16px)) saturate(170%);
   backdrop-filter: blur(calc(10px + var(--frost) * 16px)) saturate(170%);
   box-shadow: var(--glass-shadow), 0 20px 44px -18px rgb(17 24 39 / 40%);
-  transition: transform .55s var(--ease-spring), opacity .3s ease, --frost 1.8s var(--ease-in-out);
+  transition: transform .55s var(--ease-spring), opacity .3s ease;
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .tabbar { background: rgb(255 255 255 / 95%); }
@@ -1224,7 +1195,7 @@ legend { padding: 0; }
 @media (prefers-contrast: more) {
   .panel, .tabbar, .btn:not(.btn-primary), .chip, .buddy-option, .lang-switch, .msg-bot { background: #fff; box-shadow: 0 0 0 1px var(--ink); }
   .tabbar { -webkit-backdrop-filter: none; backdrop-filter: none; }
-  :is(.panel, .sheet)::before, :is(.panel, .sheet)::after { display: none; }
+  :is(.panel, .sheet)::before { display: none; }
   .lens { box-shadow: 0 0 0 2px var(--ink); }
   input, select, textarea { border-color: var(--ink); background: #fff; }
 }
@@ -1233,7 +1204,7 @@ legend { padding: 0; }
   .hero-band::before, .aqi-scale-bar span, .bar-fill { forced-color-adjust: none; }
   .advice, .day-item, .dd-col li { border-color: CanvasText; }
   .atmosphere { display: none; }
-  :is(.panel, .sheet)::before, :is(.panel, .sheet)::after { display: none; }
+  :is(.panel, .sheet)::before { display: none; }
   .panel, .tabbar, .caption, .msg { border: 1px solid CanvasText; }
   .btn, .chip, .buddy-option, .lang-switch, .phase-options { border: 1px solid ButtonText; }
   .lens { forced-color-adjust: none; background: Highlight; box-shadow: none; }
@@ -1298,7 +1269,7 @@ body { background: transparent; color: var(--ink); }
 /* The scene has no frame: it runs edge to edge and fades into the page. */
 body[data-screen="main"] .site-header { padding: 0; }
 .panel.air { padding: 0; background: none; box-shadow: none; isolation: auto; }
-.panel.air::before, .panel.air::after { display: none; }
+.panel.air::before { display: none; }
 .stage {
   margin: 0 calc(var(--gutter) * -1); border-radius: 0; corner-top-right-shape: round;
   -webkit-mask: none; mask: none; min-height: 590px;
@@ -1374,5 +1345,3 @@ select option { color: #0d1b2a; background: #ffffff; }
   .panel.air { background: none; box-shadow: none; }
   input, select, textarea { border-color: #fff; background: #000; }
 }
-/* On deep glass the frost grain reads louder, so keep it to a fine shimmer. */
-:is(.panel, .sheet)::before { opacity: calc(.22 + var(--frost) * .33); }

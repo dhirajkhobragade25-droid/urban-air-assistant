@@ -7,7 +7,7 @@ import {
 } from '../js/spring.js';
 import {
   TEXT, BARE_TEXT, GLASS_TEXT, TAB_TEXT, CONTROL_FILL, composite, worstText,
-  SKY, skyFor, heroGlassFor, GLASS_FROST, WIPE, wipeRadius, wipeDone, pickAlpha,
+  SKY, skyFor, heroGlassFor, GLASS_FROST, pickAlpha,
 } from '../js/glass.js';
 import { existsSync, statSync } from 'node:fs';
 import { PHASES, gradeFor, contrastRatio, MIN_CONTRAST } from '../js/grade.js';
@@ -241,28 +241,6 @@ test('every switch is a labelled checkbox with role="switch"', () => {
     assert.match(tag, /type="checkbox"/);
     assert.match(tag, /role="switch"/);
   }
-});
-
-/* ---------- Wiping the frost ---------- */
-
-test('a wiped spot grows under the finger, stays clear, then fogs back', () => {
-  assert.equal(wipeRadius(0), 0);
-  assert.equal(wipeRadius(-1), 0);
-  assert.ok(wipeRadius(WIPE.grow / 2) > 0 && wipeRadius(WIPE.grow / 2) < WIPE.radius);
-  assert.equal(wipeRadius(WIPE.grow), WIPE.radius);
-  assert.equal(wipeRadius(10), WIPE.radius, 'stays wiped while the finger is down');
-  // Finger lifts at 0.3 s: clear for WIPE.hold, then shrinks to nothing over WIPE.fade.
-  const lift = 0.3;
-  const start = lift + WIPE.hold;
-  assert.equal(wipeRadius(start, lift), WIPE.radius);
-  const mid = wipeRadius(start + WIPE.fade / 2, lift);
-  assert.ok(mid > 0 && mid < WIPE.radius, `mid ${mid}`);
-  assert.equal(wipeRadius(start + WIPE.fade, lift), 0);
-  assert.equal(wipeDone(start + WIPE.fade, lift), true);
-  assert.equal(wipeDone(start, lift), false);
-  assert.equal(wipeDone(99, null), false, 'never done while held');
-  // A very quick tap still opens fully before fogging back.
-  assert.equal(wipeRadius(WIPE.grow + 0.01, 0.02), WIPE.radius);
 });
 
 test('Poppins is self-hosted, licensed, and allowed by the content security policy', () => {

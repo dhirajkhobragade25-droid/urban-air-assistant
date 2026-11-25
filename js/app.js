@@ -9,7 +9,7 @@ import { ACTIVITY_IDS, ROUTINE_HOURS, normalizeRoutine, planRoutine, summarizeIm
 import { createTranslator, resolveLang } from './i18n.js';
 import { PHASES, phaseForHour, gradeFor } from './grade.js';
 import { skyFor, heroGlassFor } from './glass.js';
-import { enablePress, enableWipe, createLens } from './press.js';
+import { enablePress, createLens } from './press.js';
 import {
   startScreen, afterPlace, normalizeSetup, demoStartAqi, shortPlace, placeToStore, restorePlace,
 } from './flow.js';
@@ -804,7 +804,6 @@ function bindEvents() {
   document.querySelectorAll('.lang-btn').forEach((btn) => btn.addEventListener('click', () => setLang(btn.dataset.lang)));
   els.tabbar.addEventListener('click', onTabClick);
   enablePress(document, { reducedMotion: prefersReducedMotion });
-  enableWipe(document, { reducedMotion: prefersReducedMotion });
 }
 
 function init() {

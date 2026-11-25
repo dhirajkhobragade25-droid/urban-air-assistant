@@ -1,9 +1,8 @@
 /**
- * Touch feel. A finger wipes the frost off Glacier glass like a fogged
- * window, and it slowly fogs back. Every control also sinks under the
- * finger and springs back with a small wobble; selection lenses glide between options like a drop of
- * glass; a soft light follows the finger; phones that support it give a
- * short haptic tick on release.
+ * Touch feel. Every control sinks under the finger and springs back with a
+ * small wobble; selection lenses glide between options like a drop of glass;
+ * a soft light follows the finger; phones that support it give a short
+ * haptic tick on release.
  *
  * One set of delegated listeners on the document, so controls added later
  * (plan, chat, place results) get the same feel without extra wiring.
@@ -11,7 +10,6 @@
  * The spring maths lives in spring.js and is unit-tested.
  */
 import { pressDepth, pressKeyframes, releaseKeyframes, glideKeyframes } from './spring.js';
-import { wipeRadius, wipeDone } from './glass.js';
 
 export const PRESSABLE = [
   '.btn', '.chip', '.lang-btn', '.tab', '.phase-option', '.buddy-option',
@@ -157,91 +155,4 @@ export function createLens(track, findActive, { reducedMotion = () => false } = 
 
   if (typeof ResizeObserver === 'function') new ResizeObserver(() => update(false)).observe(track);
   return { update };
-}
-
-/* ---------- Wipe the frost ---------- */
-
-/** Glass that can be wiped, and how many wiped spots each piece remembers. */
-export const WIPEABLE = '.panel, .sheet';
-export const MAX_WIPES = 8;
-const TRAIL_PX = 18; // a dragging finger leaves a new spot every this many pixels
-
-/**
- * Lets a finger (or mouse) wipe frost off the glass. Each spot is a hole in
- * the frost layer's mask (CSS vars --w0 … --w7 on the glass); it grows under
- * the finger, stays clear for a moment, then fogs back (see wipeRadius).
- * The newest spot also gets a bright wet edge (--wr).
- */
-export function enableWipe(root, { selector = WIPEABLE, reducedMotion = () => false } = {}) {
-  const spots = new Map(); // glass element → [{x, y, born, releasedAfter, pointerId}]
-  const now = () => performance.now() / 1000;
-  let frame = 0;
-
-  function draw() {
-    frame = 0;
-    const t = now();
-    for (const [glass, list] of spots) {
-      const live = list.filter((s) => !wipeDone(t - s.born, s.releasedAfter));
-      for (let i = 0; i < MAX_WIPES; i += 1) {
-        const s = live[i];
-        const r = s ? wipeRadius(t - s.born, s.releasedAfter) : 0;
-        glass.style.setProperty(`--w${i}`, s && r > 0 ? `${r.toFixed(1)}px at ${s.x}px ${s.y}px` : '0px at -99px -99px');
-      }
-      // The wet edge follows only the newest spot, where the finger is.
-      const head = live[live.length - 1];
-      const headR = head ? wipeRadius(t - head.born, head.releasedAfter) : 0;
-      glass.style.setProperty('--wr', head && headR > 0 ? `${headR.toFixed(1)}px at ${head.x}px ${head.y}px` : '0px at -99px -99px');
-      if (live.length) spots.set(glass, live);
-      else {
-        spots.delete(glass);
-        glass.classList.remove('is-wiping');
-      }
-    }
-    if (spots.size) frame = requestAnimationFrame(draw);
-  }
-
-  function addSpot(glass, event) {
-    const box = glass.getBoundingClientRect();
-    const list = spots.get(glass) || [];
-    list.push({
-      x: Math.round(event.clientX - box.left), y: Math.round(event.clientY - box.top),
-      born: now(), releasedAfter: null, pointerId: event.pointerId,
-    });
-    while (list.length > MAX_WIPES) list.shift();
-    spots.set(glass, list);
-    glass.classList.add('is-wiping');
-    if (!frame) frame = requestAnimationFrame(draw);
-  }
-
-  const glassFrom = (target) => (target instanceof Element ? target.closest(selector) : null);
-
-  root.addEventListener('pointerdown', (event) => {
-    if (event.button > 0 || reducedMotion()) return;
-    const glass = glassFrom(event.target);
-    if (glass) addSpot(glass, event);
-  }, { passive: true });
-
-  root.addEventListener('pointermove', (event) => {
-    if (!event.buttons && event.pointerType === 'mouse') return;
-    for (const [glass, list] of spots) {
-      const last = [...list].reverse().find((s) => s.pointerId === event.pointerId && s.releasedAfter === null);
-      if (!last) continue;
-      const box = glass.getBoundingClientRect();
-      const x = event.clientX - box.left;
-      const y = event.clientY - box.top;
-      if (Math.hypot(x - last.x, y - last.y) >= TRAIL_PX) {
-        last.releasedAfter = now() - last.born; // the finger moved on; this spot starts to fog back
-        addSpot(glass, event);
-      }
-    }
-  }, { passive: true });
-
-  const lift = (event) => {
-    const t = now();
-    for (const list of spots.values()) {
-      for (const s of list) if (s.pointerId === event.pointerId && s.releasedAfter === null) s.releasedAfter = t - s.born;
-    }
-  };
-  root.addEventListener('pointerup', lift, { passive: true });
-  root.addEventListener('pointercancel', lift, { passive: true });
 }
