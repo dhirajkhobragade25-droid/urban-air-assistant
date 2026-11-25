@@ -28,6 +28,13 @@ A GenAI-powered assistant that helps families and communities get through **seve
 4. **Ask the assistant** anything ("When should we go out today?", "Do I need a mask?"). Answers come from **Google Gemini**, grounded in the same data and plan, with an offline fallback.
 5. A friendly animated **buddy** (Phephde Brothers, Badal or Tulsi) shows the air at a glance: it cycles down the road while kids play in clean air, then sweats, coughs, masks up and finally faints with a white flag as AQI rises. A **"What if?" slider** lets anyone try any AQI from 0 to 500.
 
+## Design: Swiss editorial, atmospheric colour
+
+- **Editorial type, not widgets.** An oversized AQI numeral, a one-line forecast in serif ("Dangerous smog now. *Cleaner air around 3 PM.*"), monospaced labels and hairline rules instead of card boxes.
+- **The scene is colour-graded, not decorated.** The hero canvas shifts like a film grade with the air: crisp morning blue-gold in clean air, golden-hour amber in haze, dusty slate in smog, smouldering obsidian at hazardous levels and OLED black at night, with subtle film grain. Text contrast stays at WCAG AA or better in every grade (lowest 6.1 : 1).
+- **One curve instead of many boxes.** A smooth 24-hour PM2.5 curve (monotone interpolation, so no invented peaks) shows reference lines, the cleanest window and a scrubber that works with touch, mouse and arrow keys.
+- **Motion-designed buddy.** Mood changes are choreographed: parts cross-fade and slide (the N95 rises into place, the gas mask drops in), the bicycle glides in, and the body glides from its current pose to rest before the next loop starts, so there is never a jump (measured: under 4 px per frame).
+
 ## Approach and logic
 
 All decisions are made by small, pure, unit-tested functions. The AI explains and personalises; it never invents the numbers.
@@ -37,6 +44,8 @@ All decisions are made by small, pure, unit-tested functions. The AI explains an
 | Outdoor band | `engine.js` | US EPA AQI bands (Good → Hazardous). |
 | Personal risk | `engine.js` | Band raised **+1** for any sensitive member once AQI > 50, **+1 more** for lung/heart conditions once AQI > 100 (capped). The buddy, plan and chat all use this personal level. |
 | Cleanest window | `engine.js` | Sliding 2-hour window over the next 24 h of hourly PM2.5; shown only if ≥ 10 % cleaner. |
+| Editorial headline | `engine.js` | "Now" phrase from the band; "next" phrase picks *cleaner around…* (≥ 25 % drop) or *thickens around…* (≥ 25 % rise), else *little change*. |
+| Forecast curve | `chart.js` | Monotone cubic (Fritsch–Carlson) path through the next 24 hourly points; never overshoots the data. |
 | **Daily routine re-planner** | `routine.js` | For each activity, its next occurrence is compared with every hour in the next 24 h that fits that activity (e.g. commute 07–11, kids' play 15–19). Move if the cleanest fitting hour is **≥ 15 % lower** in PM2.5; take **hard-breathing** activities indoors if even the best hour is ≥ 55.5 µg/m³ (AQI 150); add an N95 or "keep it light" note above 35.5 µg/m³ (AQI 100). Without a forecast it falls back to the current AQI. |
 | Recommendations | `advice.js` | 26 transparent rules → 4 groups, sorted by priority (Do now → Important → Good habit), max 4 per group. |
 | Do's and don'ts | `advice.js` | Two priority-ordered rule lists (up to 6 each) for a one-glance summary. |
@@ -54,7 +63,8 @@ All decisions are made by small, pure, unit-tested functions. The AI explains an
             │      ├─ js/api.js ──► Open-Meteo geocoding + air quality (CAMS)        │
             │      │                 current US AQI, PM2.5, PM10, NO₂, O₃ + hourly    │
             │      │                                                                  │
-            │      ├─ js/engine.js    AQI bands, personal risk, windows, CO₂ maths    │
+            │      ├─ js/engine.js    AQI bands, risk, windows, headline, CO₂ maths   │
+            │      ├─ js/chart.js     smooth 24 h curve geometry                       │
             │      ├─ js/routine.js   daily-routine re-planner + impact summary       │
             │      ├─ js/advice.js    26 advice rules + do/don't lists                │
             │      ├─ js/assistant.js grounded prompts ──► Google Gemini (optional)   │
@@ -118,7 +128,7 @@ When should we go out today?
 git clone https://github.com/dhirajkhobragade25-droid/urban-air-assistant.git
 cd urban-air-assistant
 npm start            # serves the folder at http://localhost:8080 (python3 -m http.server)
-npm test             # 64 unit tests with node:test, no install needed
+npm test             # 75 unit tests with node:test, no install needed
 npm run coverage     # same tests with a coverage report
 npm run check        # syntax check of every module
 ```
@@ -144,8 +154,8 @@ Any static file server works (ES modules need `http://`, not `file://`).
 |---|---|
 | **Code quality** | Small single-purpose ES modules; all decisions in pure functions; views separated from the controller; JSDoc on public functions; no dependencies. |
 | **Security** | Strict Content-Security-Policy (self-hosted scripts/styles, network limited to Open-Meteo and Gemini, `base-uri`/`form-action` locked); no `innerHTML`; whitelist validation of profile, routine, coordinates, API key and model name; questions sanitised and capped at 300 characters; prompt-injection guard; the user's Gemini key stays in memory (or `sessionStorage` if they opt in) and is sent only to Google in the `x-goog-api-key` header, never in a URL; `no-referrer` policy. |
-| **Efficiency** | ~205 KB static site (~57 KB gzipped); one geocode + one air request per search; 10-minute cache; request timeouts; stale responses ignored; slider and form input coalesced to one render per animation frame; animation uses only `transform`/`opacity`. |
-| **Testing** | 64 `node:test` unit tests, 100 % line coverage of the logic modules: AQI edges, risk, forecast windows, routine re-planning (move / keep / indoors / passed hours / no forecast), every advice rule path, CO₂ maths, prompt grounding and injection handling, Gemini error mapping, API caching and validation, storage failures, buddy rendering, and EN/HI translation parity. CI runs them on every push. |
+| **Efficiency** | ~230 KB static site (~64 KB gzipped); one geocode + one air request per search; 10-minute cache; request timeouts; stale responses ignored; slider and form input coalesced to one render per animation frame; animation uses only `transform`, `opacity` and registered colour properties; the buddy's mood hand-over uses the Web Animations API. |
+| **Testing** | 75 `node:test` unit tests, 100 % line coverage of the logic modules: AQI edges, risk, forecast windows, routine re-planning (move / keep / indoors / passed hours / no forecast), editorial headline, curve geometry, every advice rule path, CO₂ maths, prompt grounding and injection handling, Gemini error mapping, API caching and validation, storage failures, buddy rendering, and EN/HI translation parity. CI runs them on every push. |
 | **Accessibility** | Semantic landmarks and headings, labelled controls (including each time picker), skip link, visible focus, 44 px targets, status updates via `role="status"`, AQI never shown by colour alone, keyboard-operable buddy picker and collapsible groups, `prefers-reduced-motion` respected plus a Pause button (WCAG 2.2.2), full Hindi UI with correct `lang`. |
 | **Problem alignment** | Built around a family's daily routine and winter smog: low-emission routines, indoor air hacks, sustainable switches, location-specific live data and forecast, and the direct impact of every choice. |
 

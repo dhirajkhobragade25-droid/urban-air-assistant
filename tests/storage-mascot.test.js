@@ -80,3 +80,28 @@ test('formatNumber uses Indian grouping in both languages', () => {
   assert.equal(formatNumber('en', 123456), '1,23,456');
   assert.equal(formatNumber('hi', 2.5), '2.5');
 });
+
+test('a mood change glides each figure from its current pose to rest', async () => {
+  const { GLIDE_MS, GLIDE_EASING } = await import('../js/mascot.js');
+  const calls = [];
+  const figure = { pose: 'matrix(0.99, -0.12, 0.12, 0.99, 0, 10)', animate: (frames, opts) => calls.push({ frames, opts }) };
+  const resting = { pose: 'none', animate: () => calls.push('should not glide') };
+  const stage = fakeStage();
+  stage.dataset.mood = 'faint';
+  stage.dataset.character = 'twins';
+  const baseQuery = stage.querySelectorAll;
+  stage.querySelectorAll = (sel) => (sel === '.m-figure, .m-ride' ? [figure, resting] : baseQuery(sel));
+  globalThis.getComputedStyle = (node) => ({ transform: node.pose });
+  try {
+    renderMascot(stage, { character: 'twins', mood: 'happy', quip: 'up again', label: 'x' });
+    assert.equal(calls.length, 1);
+    assert.deepEqual(calls[0].frames, [{ transform: figure.pose }, { transform: 'none' }]);
+    assert.deepEqual(calls[0].opts, { duration: GLIDE_MS, easing: GLIDE_EASING });
+
+    calls.length = 0;
+    renderMascot(stage, { character: 'twins', mood: 'cough', quip: 'q', label: 'x' }, { smooth: false });
+    assert.equal(calls.length, 0, 'no glide when paused or reduced motion');
+  } finally {
+    delete globalThis.getComputedStyle;
+  }
+});

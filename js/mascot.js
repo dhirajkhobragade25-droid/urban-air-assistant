@@ -28,25 +28,57 @@ export function quipKey(mood, seed = 0) {
   return `quip.${MOODS.includes(mood) ? mood : 'happy'}.${index}`;
 }
 
+/** Motion-design easing: fast start, long soft landing (easeOutExpo-like). */
+export const GLIDE_EASING = 'cubic-bezier(0.16, 1, 0.3, 1)';
+export const GLIDE_MS = 700;
+
 /**
- * Shows the chosen buddy in the given mood. Re-triggers the "gasp" pop
- * only when the mood or the buddy actually changes.
+ * Reads the pose each figure is in right now (mid-bounce, fallen over...).
+ * Returns [] when the environment cannot animate (tests, old browsers).
+ */
+function capturePoses(stage) {
+  if (typeof getComputedStyle !== 'function') return [];
+  return Array.from(stage.querySelectorAll('.m-figure, .m-ride'))
+    .filter((node) => typeof node.animate === 'function')
+    .map((node) => ({ node, transform: getComputedStyle(node).transform }))
+    .filter((pose) => pose.transform && pose.transform !== 'none');
+}
+
+/**
+ * Glides each figure from its old pose back to rest. The new mood's loop
+ * starts after GLIDE_MS (see the CSS animation-delay), from rest, so the
+ * hand-over between two moods has no jump.
+ */
+function glideFromPoses(poses) {
+  for (const { node, transform } of poses) {
+    node.animate([{ transform }, { transform: 'none' }], { duration: GLIDE_MS, easing: GLIDE_EASING });
+  }
+}
+
+/**
+ * Shows the chosen buddy in the given mood.
  * @param {HTMLElement} stage
  * @param {{character:string, mood:string, quip:string, label:string}} view
+ * @param {{smooth?:boolean}} options  smooth=false skips the glide (paused or reduced motion)
  */
-export function renderMascot(stage, { character, mood, quip, label }) {
+export function renderMascot(stage, { character, mood, quip, label }, { smooth = true } = {}) {
   const buddy = resolveCharacter(character);
-  const changed = stage.dataset.mood !== mood || stage.dataset.character !== buddy;
+  const moodChanged = stage.dataset.mood !== mood;
+  const changed = moodChanged || stage.dataset.character !== buddy;
+  const poses = smooth && moodChanged ? capturePoses(stage) : [];
   stage.dataset.mood = mood;
   stage.dataset.character = buddy;
   stage.querySelectorAll('[data-buddy]').forEach((node) => { node.hidden = node.dataset.buddy !== buddy; });
   stage.querySelectorAll('[data-role="mascot-title"]').forEach((node) => { node.textContent = label; });
+  glideFromPoses(poses);
   const bubble = stage.querySelector('[data-role="bubble"]');
-  if (bubble) bubble.textContent = quip;
-  if (changed) {
-    stage.classList.remove('is-changing');
-    // Force a reflow so the CSS animation restarts.
-    void stage.offsetWidth;
-    stage.classList.add('is-changing');
+  if (bubble && bubble.textContent !== quip) {
+    bubble.textContent = quip;
+    if (changed) {
+      stage.classList.remove('is-changing');
+      // Force a reflow so the caption's fade-in restarts.
+      void stage.offsetWidth;
+      stage.classList.add('is-changing');
+    }
   }
 }

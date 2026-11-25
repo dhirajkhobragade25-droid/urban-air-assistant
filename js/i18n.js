@@ -12,7 +12,7 @@ const en = {
   'app.tagline': 'Live smog check, a plan made for you, and a buddy who reacts to the air.',
   'lang.label': 'Language',
 
-  'loc.heading': '1. Where are you?',
+  'loc.heading': 'Where are you?',
   'loc.city': 'City or area',
   'loc.placeholder': 'e.g. Delhi, Kolkata, Lahore',
   'loc.search': 'Check air',
@@ -45,7 +45,7 @@ const en = {
   'err.empty': 'empty reply',
   'err.aborted': 'cancelled',
 
-  'air.heading': '2. Your air right now',
+  'air.heading': 'Your air right now',
   'air.empty': 'Search a city, use your location, or drag the “What if?” slider to begin.',
   'air.aqiLabel': 'US AQI',
   'air.personal': 'For you: {label}',
@@ -61,6 +61,30 @@ const en = {
   'air.worst': 'Most polluted: {range}{day}',
   'air.simulated': 'Simulated value: no live pollutant or forecast data.',
   'air.updated': 'Updated {time} local time',
+  'head.now.good': 'Clear air now.',
+  'head.now.moderate': 'Light haze now.',
+  'head.now.sensitive': 'Hazy now.',
+  'head.now.unhealthy': 'Thick smog now.',
+  'head.now.very-unhealthy': 'Heavy smog now.',
+  'head.now.hazardous': 'Dangerous smog now.',
+  'head.next.cleaner': 'Cleaner air around {clock}{day}.',
+  'head.next.worse': 'Smog thickens around {clock}{day}.',
+  'head.next.steady': 'Little change expected over the next day.',
+  'head.sim': 'A what-if reading. Check a city for the forecast.',
+  'hero.unit': 'US AQI',
+  'hero.whatIf': 'What-if mode',
+  'hero.idle': 'Pick a city. We’ll read the air for you.',
+  'chart.summary': 'PM2.5 forecast for the next 24 hours: {now} µg/m³ now, lowest {min} at {minClock}, highest {max} at {maxClock}.',
+  'chart.heading': 'Next 24 hours · PM2.5',
+  'chart.scrub': 'Scrub the next 24 hours',
+  'chart.value': '{clock}: PM2.5 {pm} µg/m³',
+  'chart.now': 'Now',
+  'chart.best': 'Cleanest',
+  'chart.who': 'WHO',
+  'chart.empty': 'The 24-hour curve appears when you check a city.',
+  'bars.heading': 'Pollutants against the WHO guideline',
+  'bars.over': '{value} µg/m³ · {x}× guideline',
+  'bars.ok': '{value} µg/m³ · within guideline',
   'common.tomorrow': ' (tomorrow)',
 
   'band.good': 'Good',
@@ -101,7 +125,7 @@ const en = {
   'quip.faint.0': 'I’m out… wake me up when AQI drops below 100 🏳️',
   'quip.faint.1': 'Not drama: this air is genuinely dangerous. Stay indoors!',
 
-  'profile.heading': '3. About you',
+  'profile.heading': 'About you',
   'profile.hint': 'Your plan updates as you change these. Saved only on this device.',
   'profile.who': 'Anyone at home who is more sensitive?',
   'profile.children': 'Children',
@@ -123,7 +147,7 @@ const en = {
   'profile.purifier': 'I have an air purifier',
   'profile.exercise': 'I exercise outdoors',
 
-  'plan.heading': '4. Your plan for today',
+  'plan.heading': 'Your plan for today',
   'plan.needData': 'Your plan appears here once there is an AQI to work with.',
   'plan.empty': 'Nothing needed here right now.',
   'routine.legend': 'Your usual day outdoors',
@@ -204,7 +228,7 @@ const en = {
   'priority.2': 'Important',
   'priority.3': 'Good habit',
 
-  'chat.heading': '5. Ask the assistant',
+  'chat.heading': 'Ask the assistant',
   'chat.intro': 'Ask anything about today’s air. Answers use your city’s data and your profile.',
   'chat.label': 'Your question',
   'chat.placeholder': 'e.g. Can I go for a run this evening?',
@@ -332,7 +356,7 @@ const hi = {
   'app.tagline': 'लाइव स्मॉग जाँच, आपके लिए बना प्लान, और एक दोस्त जो हवा पर रिएक्ट करता है।',
   'lang.label': 'भाषा',
 
-  'loc.heading': '1. आप कहाँ हैं?',
+  'loc.heading': 'आप कहाँ हैं?',
   'loc.city': 'शहर या इलाक़ा',
   'loc.placeholder': 'जैसे दिल्ली, कोलकाता, लखनऊ',
   'loc.search': 'हवा जाँचें',
@@ -365,7 +389,7 @@ const hi = {
   'err.empty': 'ख़ाली जवाब',
   'err.aborted': 'रद्द किया गया',
 
-  'air.heading': '2. अभी आपकी हवा',
+  'air.heading': 'अभी आपकी हवा',
   'air.empty': 'शहर खोजें, अपनी लोकेशन लें, या शुरू करने के लिए “क्या होगा अगर?” स्लाइडर खिसकाएँ।',
   'air.aqiLabel': 'US AQI',
   'air.personal': 'आपके लिए: {label}',
@@ -381,6 +405,30 @@ const hi = {
   'air.worst': 'सबसे प्रदूषित: {range}{day}',
   'air.simulated': 'आज़माया गया मान: लाइव प्रदूषक या पूर्वानुमान डेटा नहीं।',
   'air.updated': 'स्थानीय समय {time} पर अपडेट',
+  'head.now.good': 'अभी हवा साफ़ है।',
+  'head.now.moderate': 'अभी हल्की धुंध है।',
+  'head.now.sensitive': 'अभी धुंध है।',
+  'head.now.unhealthy': 'अभी घना स्मॉग है।',
+  'head.now.very-unhealthy': 'अभी भारी स्मॉग है।',
+  'head.now.hazardous': 'अभी ख़तरनाक स्मॉग है।',
+  'head.next.cleaner': '{clock}{day} के आसपास हवा साफ़ होगी।',
+  'head.next.worse': '{clock}{day} के आसपास स्मॉग बढ़ेगा।',
+  'head.next.steady': 'अगले 24 घंटे में ज़्यादा बदलाव की उम्मीद नहीं।',
+  'head.sim': 'यह आज़माया गया मान है। पूर्वानुमान के लिए शहर जाँचें।',
+  'hero.unit': 'US AQI',
+  'hero.whatIf': '“क्या होगा अगर?” मोड',
+  'hero.idle': 'शहर चुनें। हम आपके लिए हवा पढ़ेंगे।',
+  'chart.summary': 'अगले 24 घंटे का PM2.5 पूर्वानुमान: अभी {now} µg/m³, सबसे कम {min} ({minClock}), सबसे ज़्यादा {max} ({maxClock})।',
+  'chart.heading': 'अगले 24 घंटे · PM2.5',
+  'chart.scrub': 'अगले 24 घंटे खिसकाकर देखें',
+  'chart.value': '{clock}: PM2.5 {pm} µg/m³',
+  'chart.now': 'अभी',
+  'chart.best': 'सबसे साफ़',
+  'chart.who': 'WHO',
+  'chart.empty': 'शहर जाँचने पर 24 घंटे का कर्व दिखेगा।',
+  'bars.heading': 'प्रदूषक बनाम WHO सीमा',
+  'bars.over': '{value} µg/m³ · सीमा का {x} गुना',
+  'bars.ok': '{value} µg/m³ · सीमा के अंदर',
   'common.tomorrow': ' (कल)',
 
   'band.good': 'अच्छी',
@@ -421,7 +469,7 @@ const hi = {
   'quip.faint.0': 'मैं तो गया… AQI 100 से नीचे आए तो उठाना 🏳️',
   'quip.faint.1': 'ड्रामा नहीं: ये हवा सच में ख़तरनाक है। घर में रहो!',
 
-  'profile.heading': '3. आपके बारे में',
+  'profile.heading': 'आपके बारे में',
   'profile.hint': 'इन्हें बदलते ही प्लान अपडेट होता है। सिर्फ़ इसी डिवाइस पर सेव होता है।',
   'profile.who': 'घर में कोई ज़्यादा संवेदनशील है?',
   'profile.children': 'बच्चे',
@@ -443,7 +491,7 @@ const hi = {
   'profile.purifier': 'मेरे पास एयर प्यूरीफ़ायर है',
   'profile.exercise': 'मैं बाहर कसरत करता/करती हूँ',
 
-  'plan.heading': '4. आज का आपका प्लान',
+  'plan.heading': 'आज का आपका प्लान',
   'plan.needData': 'AQI मिलते ही आपका प्लान यहाँ दिखेगा।',
   'plan.empty': 'अभी यहाँ कुछ ज़रूरी नहीं।',
   'routine.legend': 'बाहर आपका आम दिन',
@@ -524,7 +572,7 @@ const hi = {
   'priority.2': 'ज़रूरी',
   'priority.3': 'अच्छी आदत',
 
-  'chat.heading': '5. सहायक से पूछें',
+  'chat.heading': 'सहायक से पूछें',
   'chat.intro': 'आज की हवा के बारे में कुछ भी पूछें। जवाब आपके शहर के डेटा और प्रोफ़ाइल पर आधारित होंगे।',
   'chat.label': 'आपका सवाल',
   'chat.placeholder': 'जैसे क्या मैं आज शाम दौड़ने जा सकता हूँ?',
@@ -684,6 +732,21 @@ export function createTranslator(lang) {
 /** Keys defined for a language (used by tests). */
 export function keysFor(lang) {
   return Object.keys(TABLES[resolveLang(lang)]);
+}
+
+/**
+ * A clock time for editorial copy: "4 PM" in English, "शाम 4 बजे" in Hindi.
+ * @param {string} lang
+ * @param {number} hour 0–23
+ */
+export function formatClock(lang, hour) {
+  const h12 = hour % 12 === 0 ? 12 : hour % 12;
+  if (resolveLang(lang) !== 'hi') return `${h12} ${hour < 12 ? 'AM' : 'PM'}`;
+  let part = 'रात';
+  if (hour >= 4 && hour < 12) part = 'सुबह';
+  else if (hour >= 12 && hour < 16) part = 'दोपहर';
+  else if (hour >= 16 && hour < 20) part = 'शाम';
+  return `${part} ${h12} बजे`;
 }
 
 /** Locale-aware number formatting. */

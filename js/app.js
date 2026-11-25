@@ -16,7 +16,7 @@ import {
 import { $, el, prefersReducedMotion } from './dom.js';
 import { KEYS, openStorage, store } from './storage.js';
 import {
-  readoutNodes, planGroup, dosDontsSection, dayPlanSection, impactSection,
+  heroNodes, readoutNodes, planGroup, dosDontsSection, dayPlanSection, impactSection,
 } from './views.js';
 
 const local = openStorage('localStorage');
@@ -32,7 +32,7 @@ const els = {
   placeList: $('#place-results ul'),
   status: $('#status'),
   stage: $('#stage'),
-  stageAqi: $('[data-role="stage-aqi"]'),
+  heroCopy: $('#hero-copy'),
   motionBtn: $('#motion-btn'),
   buddyPicker: $('.buddy-picker'),
   readout: $('#readout'),
@@ -148,9 +148,23 @@ function computeView() {
 
 function render() {
   state.view = computeView();
+  renderHero(state.view);
   els.readout.replaceChildren(...readoutNodes(state.view, T, state.lang));
   renderMascotView(state.view);
   renderPlan(state.view);
+}
+
+/** Local hour of the reading (or of the device in what-if mode). */
+function localHour(view) {
+  return view && view.snapshot ? Number.parseInt(view.snapshot.time.slice(11, 13), 10) : new Date().getHours();
+}
+
+/** The hero copy plus the scene's colour grade: band of the air, day or night. */
+function renderHero(view) {
+  els.heroCopy.replaceChildren(...heroNodes(view, T, state.lang));
+  const hour = localHour(view);
+  els.stage.dataset.band = view ? view.risk.band.key : 'good';
+  els.stage.dataset.night = String(hour >= 19 || hour < 6);
 }
 
 /** Coalesces rapid slider and form input into one render per animation frame. */
@@ -162,29 +176,18 @@ function scheduleRender() {
   });
 }
 
-function renderStageBadge(view) {
-  const badge = els.stageAqi;
-  badge.hidden = !view;
-  els.stage.classList.toggle('has-aqi', Boolean(view));
-  if (!view) return;
-  badge.dataset.band = view.risk.band.key;
-  badge.querySelector('strong').textContent = String(view.aqi);
-  badge.querySelector('span').textContent = T(`band.${view.risk.band.key}`);
-}
-
 function renderMascotView(view) {
   const mood = moodForLevel(view ? view.risk.level : 0);
   if (mood !== state.mood) {
     state.mood = mood;
     state.quipSeed += 1;
   }
-  renderStageBadge(view);
   renderMascot(els.stage, {
     character: state.character,
     mood,
     quip: T(view ? quipKey(mood, state.quipSeed) : 'quip.idle'),
     label: T('mascot.label', { name: T(`char.${state.character}`), mood: T(`mood.${mood}`) }),
-  });
+  }, { smooth: !state.paused && !prefersReducedMotion() });
 }
 
 function renderPlan(view) {

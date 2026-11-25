@@ -231,3 +231,45 @@ export function parseAirQuality(json) {
     hourly,
   };
 }
+
+/** WHO 2021 air-quality guidelines, µg/m³ (24-hour; ozone is the 8-hour value). */
+export const WHO_GUIDELINES = Object.freeze({ pm25: 15, pm10: 45, no2: 25, o3: 100 });
+
+/**
+ * Each available pollutant as a multiple of its WHO guideline.
+ * @returns {Array<{key:string, value:number, guideline:number, ratio:number}>}
+ */
+export function pollutantRatios(snapshot) {
+  if (!snapshot) return [];
+  return Object.entries(WHO_GUIDELINES)
+    .filter(([key]) => Number.isFinite(snapshot[key]) && snapshot[key] >= 0)
+    .map(([key, guideline]) => ({
+      key,
+      value: Math.round(snapshot[key]),
+      guideline,
+      ratio: round1(snapshot[key] / guideline),
+    }));
+}
+
+/**
+ * The editorial headline: what the air is like now, and what changes next.
+ * @param {{band:{key:string}, snapshot:object|null, window:object|null}} input
+ * @returns {{nowKey:string, next:null|{key:string, hour?:number, nextDay?:boolean}}}
+ */
+export function headlineFor({ band, snapshot, window }) {
+  const nowKey = `head.now.${band.key}`;
+  if (!snapshot) return { nowKey, next: null }; // what-if mode: the meta line already says so
+  if (!window) return { nowKey, next: null };
+  const hourOfIso = (iso) => Number.parseInt(iso.slice(11, 13), 10);
+  const current = Number.isFinite(snapshot.pm25) ? snapshot.pm25 : window.worst;
+  const cleanerSoon = window.reductionPct >= 25 && window.best < current * 0.8;
+  const worseSoon = window.worst > current * 1.25 && window.worstStart > snapshot.time;
+  const badNow = bandIndex(snapshot.aqi) >= 3;
+  if (cleanerSoon && (badNow || !worseSoon)) {
+    return { nowKey, next: { key: 'head.next.cleaner', hour: hourOfIso(window.start), nextDay: window.nextDay } };
+  }
+  if (worseSoon) {
+    return { nowKey, next: { key: 'head.next.worse', hour: hourOfIso(window.worstStart), nextDay: window.worstNextDay } };
+  }
+  return { nowKey, next: { key: 'head.next.steady' } };
+}
